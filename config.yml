@@ -1,0 +1,90 @@
+baseURL: http://localhost:1313/
+title: itosys blog
+paginate: 5
+theme: PaperMod
+enableRobotsTXT: true
+buildDrafts: false
+buildFuture: false
+buildExpired: false
+
+minify:
+    disableXML: true
+    minifyOutput: true
+
+params:
+    title: itosys
+    description: "itosys blog"
+    keywords: [Blog, Portfolio]
+    defaultTheme: light
+    disableThemeToggle: false
+
+    ShowReadingTime: false
+    ShowShareButtons: false
+    ShowPostNavLinks: true
+    ShowBreadCrumbs: false
+    ShowCodeCopyButtons: false
+    disableSpecial1stPost: false
+    disableScrollToTop: false
+    comments: false
+    hidemeta: false
+    hideSummary: false
+    showtoc: false
+    tocopen: false
+    custom_css: ["/css/custom.css"]
+
+    assets:
+        favicon: "<link / abs url>"
+        favicon16x16: "<link / abs url>"
+        favicon32x32: "<link / abs url>"
+        apple_touch_icon: "<link / abs url>"
+        safari_pinned_tab: "<link / abs url>"
+
+    profileMode:
+        enabled: false
+
+    homeInfoParams:
+        Title: Naoya Ito
+        Content: >
+            - 東京都内でフリーランスのソフトウェアエンジニアをしています。
+
+            - 詳細はこちら → [About Me](/about/)
+
+    socialIcons:
+        - name: facebook
+          url: "https://m.me/naoya.ito.1829/"
+        - name: github
+          url: "https://github.com/itosys/"
+        - name: linkedin
+          url: "https://www.linkedin.com/in/naoya-ito-68728a116/"
+        - name: email
+          url: "mailto:nao7120ya@gmail.com"
+
+    analytics:
+        google:
+            SiteVerificationTag: "XYZabc"
+
+    cover:
+        hidden: true
+        hiddenInList: true
+        hiddenInSingle: true
+
+menu:
+    main:
+        - identifier: about
+          name: About
+          url: /about/
+          weight: 10
+        - identifier: archives
+          name: Archives
+          url: /archives/
+          weight: 20
+
+# Read: https://github.com/adityatelange/hugo-PaperMod/wiki/FAQs#using-hugos-syntax-highlighter-chroma
+# pygmentsUseClasses: true
+# markup:
+#     highlight:
+#         # anchorLineNos: true
+#         codeFences: true
+#         guessSyntax: true
+#         lineNos: true
+#         style: monokai
