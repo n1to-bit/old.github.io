@@ -1,3 +1,11 @@
 .post-content li {
     margin-top: 1px !important;
 }
+
+.archive-year {
+    margin-top: 0px !important;
+}
+
+.home-hr {
+    border: 1px solid var(--border);
+}
