@@ -1,5 +1,5 @@
-baseURL: http://localhost:1313/
-title: itosys blog
+baseURL: https://nito95.github.io/
+title: nito95 blog
 paginate: 5
 theme: PaperMod
 enableRobotsTXT: true
@@ -12,11 +12,12 @@ minify:
     minifyOutput: true
 
 params:
-    title: itosys
-    description: "itosys blog"
+    title: nito95
+    description: "nito95 blog"
     keywords: [Blog, Portfolio]
     defaultTheme: light
     disableThemeToggle: false
+    enableInlineShortcodes: true
 
     ShowReadingTime: false
     ShowShareButtons: false
@@ -53,7 +54,7 @@ params:
         - name: facebook
           url: "https://m.me/naoya.ito.1829/"
         - name: github
-          url: "https://github.com/itosys/"
+          url: "https://github.com/nito95/"
         - name: linkedin
           url: "https://www.linkedin.com/in/naoya-ito-68728a116/"
         - name: email
@@ -74,10 +75,6 @@ menu:
           name: About
           url: /about/
           weight: 10
-        - identifier: archives
-          name: Archives
-          url: /archives/
-          weight: 20
 
 # Read: https://github.com/adityatelange/hugo-PaperMod/wiki/FAQs#using-hugos-syntax-highlighter-chroma
 # pygmentsUseClasses: true

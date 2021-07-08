@@ -49,7 +49,7 @@ Clowd
 #### Social Accounts
 
 - [Facebook](https://m.me/naoya.ito.1829/)
-- [Github](https://github.com/itosys/)
+- [Github](https://github.com/nito95/)
 - [LinkedIn](https://www.linkedin.com/in/naoya-ito-68728a116/)
 - [Wantedly](https://www.wantedly.com/id/itosys)
 - mail: nao7120ya@gmail.com
