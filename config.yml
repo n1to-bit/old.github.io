@@ -62,7 +62,7 @@ params:
 
     analytics:
         google:
-            SiteVerificationTag: "XYZabc"
+            SiteVerificationTag: "G-FT3WYS86E7"
 
     cover:
         hidden: true
