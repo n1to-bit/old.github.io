@@ -1,3 +1,11 @@
+body {
+    font-size: 16px !important;
+}
+
+.post-title {
+    font-size: 36px !important;
+}
+
 .post-content li {
     margin-top: 1px !important;
 }
