@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>AtCoder on nito95 blog</title>
+    <link>https://nito95.github.io/categories/atcoder/</link>
+    <description>Recent content in AtCoder on nito95 blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Tue, 02 Mar 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://nito95.github.io/categories/atcoder/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>AtCoderの C&#43;&#43;入門 APG4bをやった</title>
+      <link>https://nito95.github.io/posts/2021-03-02/</link>
+      <pubDate>Tue, 02 Mar 2021 00:00:00 +0000</pubDate>
+      
+      <guid>https://nito95.github.io/posts/2021-03-02/</guid>
+      <description>前職の頃、仕事中の気分転換に同僚とLeetCodeをたまーにやっていました。前職のメイン言語がGoとRubyだったのでRubyで解いていました。アルゴリズムは全く勉強しておらず、Easyは一通り解けてMediumは難しいなあ、というレベルでした。
+あれから1~2年経ち、ちゃんと勉強して競プロに参加してみようと思い、どうせ始めるならC++を勉強してC++で書いていこう！ということで AtCoderの APG4b をやりました。
+APG4bとは APG4b はAtCoderのC++入門教材です。C++の基本文法や、再帰、ビット全探索など競プロで使う手法をわかりやすく説明し、その後練習問題を解いて定着を図るというものです。
+環境構築 VSCodeでコーディング、コンパイル、実行できるようにしました。Code Runner というExtensionでVSCodeからコマンドを叩くことでコンパイル&amp;amp;実行できます。
+少し詰まったこととして、AtCoderでは通るがローカルではコンパイルで失敗することがあり、調べた結果Code Runnerの実行コードを少し変えて
+&amp;#34;cpp&amp;#34;: &amp;#34;cd $dir &amp;amp;&amp;amp; g++ $fileName -o $fileNameWithoutExt &amp;amp;&amp;amp; $dir$fileNameWithoutExt&amp;#34;, を
+&amp;#34;cpp&amp;#34;: &amp;#34;cd $dir &amp;amp;&amp;amp; g++ -std=c++17 $fileName -o $fileNameWithoutExt &amp;amp;&amp;amp; $dir$fileNameWithoutExt&amp;#34;, にすることで通るようになりました。記憶が曖昧ですがvector周りの何かで失敗してたかな&amp;hellip;? 後のバージョンでサポートされた何かを含んでいたってことですね。
+感想 全てを終えるのに1週間ほどかかりました。
+C++の基本文法のインプットに手こずることはなく、練習問題も基本的にすんなり解けたのですが、よかったらこれも解いてみてねの感じで登場するABC/ARCの問題を解くのに非常に時間がかかり、結果1週間かかりました。結局全ての問題を解けたわけではないです。
+特に再帰関数を使ったABC/ARCの問題は難しかったです。解いてる問題が圧倒的に少なく、まだ慣れていないというのが大きいと思うので、詰まったら悶々と考えるのではなく他の人の解答を見る、デバッグして変数の中身を見ながら処理を追ってみる、それでもよく分からなかったらいつか理解できるでしょと未来の自分に託す、という感じでやりました。
+C++という言語について思ったこと 言語仕様が多いなーと思いました。APG4bでは最低限必要な仕様についてしかおそらく載っていないんだと思いますが、それでも複雑だなと思うことがチラホラありました。
+C++のWikipedia には
+ C++はCにクラスのサポートを追加しただけでなく、さらに次のような多種多様な機能を持っており、言語仕様は大変複雑である。言語処理系すなわちコンパイラの実装も、Cなどと比べて難易度が非常に高い。 多重継承 テンプレート 演算子のオーバーロード 例外処理 実行時型情報 (RTTI)  ここから、よりオブジェクト指向を強化し、「なんでもあり」ではない代わりにシンプルで分かりやすくスマートな設計を目指した新たな言語（JavaやD言語など）が作られることとなった。 とあり、なるほどなと思いました。Javaも後から機能を追加し続けて結果C++と似た道を歩んでないかな? と思いましたが :(
+今後 書籍 「問題解決力を鍛える!アルゴリズムとデータ構造」 を買いました。初心者にも分かりやすい良本らしいです。まずはこれを読破します。
+その後はAtCoderのABCの過去問を解いていこうかなと思います。解いたことのない問題が競プロに出ても全く歯が立たないと思うので、まずは数をこなして後に競プロに挑戦します。</description>
+    </item>
+    
+  </channel>
+</rss>
