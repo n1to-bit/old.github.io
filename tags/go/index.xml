@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Go on nito95 blog</title>
+    <link>https://nito95.github.io/tags/go/</link>
+    <description>Recent content in Go on nito95 blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Tue, 11 Dec 2018 00:00:00 +0000</lastBuildDate><atom:link href="https://nito95.github.io/tags/go/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>F1 2018のTelemetryをGoでパースしてInfluxDBに流してGrafanaで描画してみる</title>
+      <link>https://nito95.github.io/posts/2018-12-11/</link>
+      <pubDate>Tue, 11 Dec 2018 00:00:00 +0000</pubDate>
+      
+      <guid>https://nito95.github.io/posts/2018-12-11/</guid>
+      <description>今いるベンチャーでは車に搭載するIoTデバイスから加速度、GPS、ジャイロデータをリアルタイムで集めて色々と分析計算しソリューションを提供しています。そのデータの格納先に時系列データベースを使わないかと議論されているので、時系列データベースを自分で試してみたいなと思ってました。
+会社の人の影響でF1 2018というゲームに最近ハマっているのですが、このゲームにはゲーム内のデータをUDPプロトコルで送信できるテレメトリー機能が搭載されています。 ゲーム内のF1カーの速度、スロットル/ブレーキ値、ステアリング値、燃料残量、GPSデータ、ラップタイムなどあらゆる情報がリアルタイムで取れます。
+これはj時系列データベースを試してみるいいきっかけだなと思い、これらのデータを取得して時系列データベースであるInfluxDBに流し、Grafanaで描画するというのを作ってみました。F1 2018からUDPでMacへ → GoでパースしてInfluxDBへ → Grafanaで表示 という流れ。
+コードはこちら nito95/F1-Telemetry
+何のデータが取れるのかはこちらを参考にしました F1 2017 D-Box and UDP Output Specification
+できたもの↓
+  右のMacにリアルタイムで描画されているのはGrafanaの画面です。ここで表示しているのは速度とスロットル/ブレーキ値です。こんな感じ↓
+  これだけの情報では示唆は少ないですが、ブレーキをフルであまり踏めてないとかブレーキ後のスロットルの踏みがたまに甘いとか多少考察できます。運転しながらリアルタイムで見るのはキツイですが後から振り返るには使えます。
+F1エンジニアの人たちはこういった情報を見てレーサーに指示したりマシンのパーツ交換をしたりするんですね。F1エンジニアに興味が出ております。F1を見に行ったことはないですが、観客もテレメトリー情報をリアルタイムで見れたりするんですかね? 見れたらすごい観戦が楽しそうな気がします :)
+あとInfluxDB + Grafanaは使いやすく、特に詰まることなくできました。Grafana見た目かっこいいです。これからも使ってみたいと思います。</description>
+    </item>
+    
+  </channel>
+</rss>
