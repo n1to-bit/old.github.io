@@ -34,9 +34,9 @@ Programming
 - Vue.js 1年
 - Solidity 半年
 - Flutter 半年
-- C++ (競プロ用) 半年
+- C++ (競プロ用)
 
-Clowd
+Cloud
 - AWS 4年 (EC2,ECS,CF,EB,CW,APIGateway,Lambda,SQS,SNS,RDS,DynamoDB,ElasticCache,S3,Glue,ES,Firehose,CloudFront,CodePipline,CodeBuild,Route53,WAF&Shield,SDK)
 - GCP 1年 (GAE,GCE,BQ,CloudFunctions,CloudStorage,Pub/Sub,Monitoring)
 - Heroku 1年
@@ -59,4 +59,4 @@ Clowd
 - ギター (HR/HM)
 - サウナ
 - 水泳
-- Apex
+- FPS Game
