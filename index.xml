@@ -43,7 +43,7 @@ sort(first, last, comp) first, last: Random-access iterators to the initial and 
     </item>
     
     <item>
-      <title>「コンピュータシステムの理論と実装」(Nand2Tetris) をやった</title>
+      <title>「コンピュータシステムの理論と実装」(Nand2Tetris)</title>
       <link>https://nito95.github.io/posts/2021-04-12/</link>
       <pubDate>Mon, 12 Apr 2021 00:00:00 +0000</pubDate>
       
@@ -59,7 +59,7 @@ sort(first, last, comp) first, last: Random-access iterators to the initial and 
     </item>
     
     <item>
-      <title>AtCoderの C&#43;&#43;入門 APG4bをやった</title>
+      <title>AtCoder C&#43;&#43;入門 APG4b</title>
       <link>https://nito95.github.io/posts/2021-03-02/</link>
       <pubDate>Tue, 02 Mar 2021 00:00:00 +0000</pubDate>
       
@@ -79,6 +79,25 @@ C++のWikipedia には
  C++はCにクラスのサポートを追加しただけでなく、さらに次のような多種多様な機能を持っており、言語仕様は大変複雑である。言語処理系すなわちコンパイラの実装も、Cなどと比べて難易度が非常に高い。 多重継承 テンプレート 演算子のオーバーロード 例外処理 実行時型情報 (RTTI)  ここから、よりオブジェクト指向を強化し、「なんでもあり」ではない代わりにシンプルで分かりやすくスマートな設計を目指した新たな言語（JavaやD言語など）が作られることとなった。 とあり、なるほどなと思いました。Javaも後から機能を追加し続けて結果C++と似た道を歩んでないかな? と思いましたが :(
 今後 書籍 「問題解決力を鍛える!アルゴリズムとデータ構造」 を買いました。初心者にも分かりやすい良本らしいです。まずはこれを読破します。
 その後はAtCoderのABCの過去問を解いていこうかなと思います。解いたことのない問題が競プロに出ても全く歯が立たないと思うので、まずは数をこなして後に競プロに挑戦します。</description>
+    </item>
+    
+    <item>
+      <title>AWS CDK (TS) で prod/staging 環境を分けて Fargate 構築</title>
+      <link>https://nito95.github.io/posts/2020-11-24/</link>
+      <pubDate>Tue, 24 Nov 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://nito95.github.io/posts/2020-11-24/</guid>
+      <description>AWS CDK (TS) を使って prod/staging でスタック名を分けてFargateの環境構築をしてみました。
+デプロイするものは GET /health_check のみのエンドポイントを持つGo製のアプリです。
+コードは こちら
+AWS ECS Fargate とは ECSはコンテナ化されたアプリケーションを簡単にデプロイ、管理、スケーリングできるコンテナオーケストレーションサービスです。 Fargateはそのコンテナを実行する環境をサーバーレスにするサービスで、EC2インスタンスやそのスケーリングといった管理する必要がなくなります。
+小さなアプリケーションをサクっと作ってデプロイするには Fargate は非常に便利です。
+AWS CDK とは CDKはCloud Formation テンプレートを好きな言語で書くことができるDevelopmern Kitです。
+Cloud Formation はAWSのシステム構成をJSONで記述したものです。コード化することで簡単に構築、修正、再利用できます。
+アプリ実装 アプリ自体は本質ではないので何でもよかったのですが、個人的な趣味でGo製にし、フレームワークとして Echo を使ってます。
+Fargateにデプロイするためにコンテナ化が必要なので、ローカル開発用の Dockerfile.local とデプロイ用の Dockerfile.prod の2つのDockerfileを用意します。 Dockerfile は [Qiita] Go 1.12 の開発環境と本番環境の Dockerfile を考える を参考にしています。
+次にローカル開発用にdocker-compose.ymlを作り、servicesに Dockerfile.local を image に指定する app と postgres を記述します。
+エンドポイントはヘルスチェックしかない単純なアプリですが、重要な部分は環境変数 ADDR と DATABASE_URL を起動時に取得し、取得できなければpanicで落ちる部分です (コード)。 後に作る Task Definition で環境変数の設定が必要となります。 DATABASE_URL は環境によってデータベースが異なるのでここの値も変わります。</description>
     </item>
     
     <item>
