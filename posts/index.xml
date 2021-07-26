@@ -101,6 +101,22 @@ Fargateにデプロイするためにコンテナ化が必要なので、ロー�
     </item>
     
     <item>
+      <title>Tile38 による Geofencing と R-tree</title>
+      <link>https://nito95.github.io/posts/2020-07-08/</link>
+      <pubDate>Wed, 08 Jul 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://nito95.github.io/posts/2020-07-08/</guid>
+      <description>現在働いている スマートドライブ では Geofencing の機能を使ったソリューションを提供しています。
+Geofencing とは、あるオブジェクトが特定のエリアに 入る/出る を検知し、アプリやソフトウェアで何かのアクションを実行することです。 これを利用することで、例えば配送車が倉庫の近くに来たタイミングで倉庫管理者に通知が飛んで受け入れ作業を効率的に行える、など様々な形で応用できます。
+  (gif は Tile38 https://github.com/tidwall/tile38 より)
+弊社では地点情報は PostGIS に store し、 Geofencing は自作をしていますが、Tile38 というOSSのライブラリは In-memory GeoDatabase &amp;amp; Geofencing の機能が提供されていたので、試しに使ってみて、どうやって実装しているのかソースコードを簡単に読んでみました。
+使用した Tile38 のバージョンは v1.21.1 です。
+How to use Dockerで tile38 サーバーを実行できます。
+$ docker pull tile38/tile38 $ docker run -p 9851:9851 tile38/tile38 tile38 に繋ぐ cli クライアントは tile38-cli で接続できます。Dockerでは -net=host で ネットワークを共有する必要があります。
+$ docker run --net=host -it tile38/tile38 tile38-cli 127.0.0.1:9851&amp;gt; SET fleet truck1 POINT 33.</description>
+    </item>
+    
+    <item>
       <title>CでTCPソケットプログラミング</title>
       <link>https://nito95.github.io/posts/2020-04-10/</link>
       <pubDate>Fri, 10 Apr 2020 00:00:00 +0000</pubDate>

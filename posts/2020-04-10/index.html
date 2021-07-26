@@ -1,4 +1,11 @@
-<!doctype html><html lang=en dir=auto><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=robots content="index, follow"><title>CでTCPソケットプログラミング | nito95 blog</title><meta name=keywords content><meta name=description content="今関わっているプロジェクトで、3rd Party製のドラレコから流れるGPSと動画データを弊社のプラットフォームに投げ込むアダプターの開発をしています。
+<!doctype html><html lang=en dir=auto>
+<head><meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="IE=edge">
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=robots content="index, follow">
+<title>CでTCPソケットプログラミング | nito95 blog</title>
+<meta name=keywords content>
+<meta name=description content="今関わっているプロジェクトで、3rd Party製のドラレコから流れるGPSと動画データを弊社のプラットフォームに投げ込むアダプターの開発をしています。
 この3rd Partyデバイスとの通信方法が独自規格でして。。。通信方法について書かれたPDFがあり、こうやって通信を開始してね、このタイミングでACKしてね、危険運転があったらこういうバイナリを送るよ、とか詳細に書いてあるわけです。
 ベテランのバックエンドエンジニアの人やファームウェアの人が通信部分をゴリゴリ作ってくださったのですが、コードを読んでも何がなんだかサッパリわかりませんでした。Ruby言語自体のコードの中身を見て、そこに書かれたCのコードを読んで、システムコールの仕様を調べては「よくわからんぞ」となっておりました。 そのときに「ソケットプログラミングしてみるといいよ」とアドバイスをもらったので、C言語でTCPソケットを実装してお勉強してみました。
 ちなみにネットワークに関しての知識は
@@ -10,7 +17,23 @@ TCPプログラミング こちらのサイトを参考にさせていただき�
   ソースコードはこちら nito95/clang-socket-programming
 サーバーもクライアントもローカルなのでクライアント側で設定した接続先のIPは127.0.0.1ですが、ここは本来 gethostbyname でWinSockに名前解決を任せます。
 これはサーバーとクライアントが繋がるとサーバーからクライアントにメッセージが送られ接続が切れる、という片手落ちなものです。 サーバーとしてあるべきはマルチスレッドで複数のクライアントと接続し、クライアントからの要求を受けたらクライアントにメッセージを返し、接続を切り再び接続要求待ち状態にするのがよいですね。
-初めてOSI参照モデルでいうL3まで下りて理解が深まりました。これ以降は全然作り込んではないですが、もしCで基本的なライブラリだけでサーバーとクライアントを作ってみる系の良い教材があれば試してみたいなと思います。"><meta name=author content><link rel=canonical href=https://nito95.github.io/posts/2020-04-10/><meta name=google-site-verification content="G-FT3WYS86E7"><link rel=stylesheet href=https://nito95.github.io/css/custom.css><link crossorigin=anonymous href=/assets/css/stylesheet.min.35cd0f65a15cafa92372b8313deef5960aae04b90ad722f2bbf509eb0468137e.css integrity="sha256-Nc0PZaFcr6kjcrgxPe71lgquBLkK1yLyu/UJ6wRoE34=" rel="preload stylesheet" as=style><script defer crossorigin=anonymous src=/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5+kdJvBz5iKbt6B5PJI=" onload=hljs.initHighlightingOnLoad()></script><link rel=icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=icon type=image/png sizes=16x16 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=icon type=image/png sizes=32x32 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=apple-touch-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=mask-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><meta name=theme-color content="#2e2e33"><meta name=msapplication-TileColor content="#2e2e33"><meta name=generator content="Hugo 0.85.0"><meta property="og:title" content="CでTCPソケットプログラミング"><meta property="og:description" content="今関わっているプロジェクトで、3rd Party製のドラレコから流れるGPSと動画データを弊社のプラットフォームに投げ込むアダプターの開発をしています。
+初めてOSI参照モデルでいうL3まで下りて理解が深まりました。これ以降は全然作り込んではないですが、もしCで基本的なライブラリだけでサーバーとクライアントを作ってみる系の良い教材があれば試してみたいなと思います。">
+<meta name=author content>
+<link rel=canonical href=https://nito95.github.io/posts/2020-04-10/>
+<meta name=google-site-verification content="G-FT3WYS86E7">
+<link rel=stylesheet href=https://nito95.github.io/css/custom.css>
+<link crossorigin=anonymous href=/assets/css/stylesheet.min.35cd0f65a15cafa92372b8313deef5960aae04b90ad722f2bbf509eb0468137e.css integrity="sha256-Nc0PZaFcr6kjcrgxPe71lgquBLkK1yLyu/UJ6wRoE34=" rel="preload stylesheet" as=style>
+<script defer crossorigin=anonymous src=/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5+kdJvBz5iKbt6B5PJI=" onload=hljs.initHighlightingOnLoad()></script>
+<link rel=icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
+<link rel=icon type=image/png sizes=16x16 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
+<link rel=icon type=image/png sizes=32x32 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
+<link rel=apple-touch-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
+<link rel=mask-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
+<meta name=theme-color content="#2e2e33">
+<meta name=msapplication-TileColor content="#2e2e33">
+<meta name=generator content="Hugo 0.86.0">
+<meta property="og:title" content="CでTCPソケットプログラミング">
+<meta property="og:description" content="今関わっているプロジェクトで、3rd Party製のドラレコから流れるGPSと動画データを弊社のプラットフォームに投げ込むアダプターの開発をしています。
 この3rd Partyデバイスとの通信方法が独自規格でして。。。通信方法について書かれたPDFがあり、こうやって通信を開始してね、このタイミングでACKしてね、危険運転があったらこういうバイナリを送るよ、とか詳細に書いてあるわけです。
 ベテランのバックエンドエンジニアの人やファームウェアの人が通信部分をゴリゴリ作ってくださったのですが、コードを読んでも何がなんだかサッパリわかりませんでした。Ruby言語自体のコードの中身を見て、そこに書かれたCのコードを読んで、システムコールの仕様を調べては「よくわからんぞ」となっておりました。 そのときに「ソケットプログラミングしてみるといいよ」とアドバイスをもらったので、C言語でTCPソケットを実装してお勉強してみました。
 ちなみにネットワークに関しての知識は
@@ -22,7 +45,14 @@ TCPプログラミング こちらのサイトを参考にさせていただき�
   ソースコードはこちら nito95/clang-socket-programming
 サーバーもクライアントもローカルなのでクライアント側で設定した接続先のIPは127.0.0.1ですが、ここは本来 gethostbyname でWinSockに名前解決を任せます。
 これはサーバーとクライアントが繋がるとサーバーからクライアントにメッセージが送られ接続が切れる、という片手落ちなものです。 サーバーとしてあるべきはマルチスレッドで複数のクライアントと接続し、クライアントからの要求を受けたらクライアントにメッセージを返し、接続を切り再び接続要求待ち状態にするのがよいですね。
-初めてOSI参照モデルでいうL3まで下りて理解が深まりました。これ以降は全然作り込んではないですが、もしCで基本的なライブラリだけでサーバーとクライアントを作ってみる系の良い教材があれば試してみたいなと思います。"><meta property="og:type" content="article"><meta property="og:url" content="https://nito95.github.io/posts/2020-04-10/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2020-04-10T00:00:00+00:00"><meta property="article:modified_time" content="2020-04-10T00:00:00+00:00"><meta property="og:site_name" content="nito95"><meta name=twitter:card content="summary"><meta name=twitter:title content="CでTCPソケットプログラミング"><meta name=twitter:description content="今関わっているプロジェクトで、3rd Party製のドラレコから流れるGPSと動画データを弊社のプラットフォームに投げ込むアダプターの開発をしています。
+初めてOSI参照モデルでいうL3まで下りて理解が深まりました。これ以降は全然作り込んではないですが、もしCで基本的なライブラリだけでサーバーとクライアントを作ってみる系の良い教材があれば試してみたいなと思います。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://nito95.github.io/posts/2020-04-10/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2020-04-10T00:00:00+00:00">
+<meta property="article:modified_time" content="2020-04-10T00:00:00+00:00"><meta property="og:site_name" content="nito95">
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="CでTCPソケットプログラミング">
+<meta name=twitter:description content="今関わっているプロジェクトで、3rd Party製のドラレコから流れるGPSと動画データを弊社のプラットフォームに投げ込むアダプターの開発をしています。
 この3rd Partyデバイスとの通信方法が独自規格でして。。。通信方法について書かれたPDFがあり、こうやって通信を開始してね、このタイミングでACKしてね、危険運転があったらこういうバイナリを送るよ、とか詳細に書いてあるわけです。
 ベテランのバックエンドエンジニアの人やファームウェアの人が通信部分をゴリゴリ作ってくださったのですが、コードを読んでも何がなんだかサッパリわかりませんでした。Ruby言語自体のコードの中身を見て、そこに書かれたCのコードを読んで、システムコールの仕様を調べては「よくわからんぞ」となっておりました。 そのときに「ソケットプログラミングしてみるといいよ」とアドバイスをもらったので、C言語でTCPソケットを実装してお勉強してみました。
 ちなみにネットワークに関しての知識は
@@ -34,13 +64,112 @@ TCPプログラミング こちらのサイトを参考にさせていただき�
   ソースコードはこちら nito95/clang-socket-programming
 サーバーもクライアントもローカルなのでクライアント側で設定した接続先のIPは127.0.0.1ですが、ここは本来 gethostbyname でWinSockに名前解決を任せます。
 これはサーバーとクライアントが繋がるとサーバーからクライアントにメッセージが送られ接続が切れる、という片手落ちなものです。 サーバーとしてあるべきはマルチスレッドで複数のクライアントと接続し、クライアントからの要求を受けたらクライアントにメッセージを返し、接続を切り再び接続要求待ち状態にするのがよいですね。
-初めてOSI参照モデルでいうL3まで下りて理解が深まりました。これ以降は全然作り込んではないですが、もしCで基本的なライブラリだけでサーバーとクライアントを作ってみる系の良い教材があれば試してみたいなと思います。"><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://nito95.github.io/posts/"},{"@type":"ListItem","position":2,"name":"CでTCPソケットプログラミング","item":"https://nito95.github.io/posts/2020-04-10/"}]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"CでTCPソケットプログラミング","name":"CでTCPソケットプログラミング","description":"今関わっているプロジェクトで、3rd Party製のドラレコから流れるGPSと動画データを弊社のプラットフォームに投げ込むアダプターの開発をしています。\nこの3rd Partyデバイスとの通信方法が独自規格でして。。。通信方法について書かれたPDFがあり、こうやって通信を開始してね、このタイミングでACKしてね、危険運転があったらこういうバイナリを送るよ、とか詳細に書いてあるわけです。\nベテランのバックエンドエンジニアの人やファームウェアの人が通信部分をゴリゴリ作ってくださったのですが、コードを読んでも何がなんだかサッパリわかりませんでした。Ruby言語自体のコードの中身を見て、そこに書かれたCのコードを読んで、システムコールの仕様を調べては「よくわからんぞ」となっておりました。 そのときに「ソケットプログラミングしてみるといいよ」とアドバイスをもらったので、C言語でTCPソケットを実装してお勉強してみました。\nちなみにネットワークに関しての知識は\n 「マスタリング TCP/IP 入門編」 「Real World HTTP - 歴史とコードに学ぶインターネットとウェブ技術」  の書籍を読んだことがある程度です。\nTCPプログラミング こちらのサイトを参考にさせていただきました Geekなぺーじ Linuxネットワークプログラミング\nサーバー サーバーはクライアントからの接続要求を待ちますが、どのように待つか設定します。\n ソケットを作る IPアドレスとポートを設定する クライアントから通信接続要求が来るまでプログラムを停止し接続後にプログラムを再開する データを送信する ソケットを閉じて通信接続を終了する  クライアント クライアントは特定のIPアドレス、TCPポート番号で接続待ちをするサーバーに対して接続要求を出します。\n ソケットを作る 接続先の指定 接続する サーバーからデータを受信  今回作ったもののソケットAPI callのサーバー、クライアントの関係を表すとこんな感じです。\n  ソースコードはこちら nito95/clang-socket-programming\nサーバーもクライアントもローカルなのでクライアント側で設定した接続先のIPは127.0.0.1ですが、ここは本来 gethostbyname でWinSockに名前解決を任せます。\nこれはサーバーとクライアントが繋がるとサーバーからクライアントにメッセージが送られ接続が切れる、という片手落ちなものです。 サーバーとしてあるべきはマルチスレッドで複数のクライアントと接続し、クライアントからの要求を受けたらクライアントにメッセージを返し、接続を切り再び接続要求待ち状態にするのがよいですね。\n初めてOSI参照モデルでいうL3まで下りて理解が深まりました。これ以降は全然作り込んではないですが、もしCで基本的なライブラリだけでサーバーとクライアントを作ってみる系の良い教材があれば試してみたいなと思います。","keywords":[],"articleBody":"今関わっているプロジェクトで、3rd Party製のドラレコから流れるGPSと動画データを弊社のプラットフォームに投げ込むアダプターの開発をしています。\nこの3rd Partyデバイスとの通信方法が独自規格でして。。。通信方法について書かれたPDFがあり、こうやって通信を開始してね、このタイミングでACKしてね、危険運転があったらこういうバイナリを送るよ、とか詳細に書いてあるわけです。\nベテランのバックエンドエンジニアの人やファームウェアの人が通信部分をゴリゴリ作ってくださったのですが、コードを読んでも何がなんだかサッパリわかりませんでした。Ruby言語自体のコードの中身を見て、そこに書かれたCのコードを読んで、システムコールの仕様を調べては「よくわからんぞ」となっておりました。 そのときに「ソケットプログラミングしてみるといいよ」とアドバイスをもらったので、C言語でTCPソケットを実装してお勉強してみました。\nちなみにネットワークに関しての知識は\n 「マスタリング TCP/IP 入門編」 「Real World HTTP - 歴史とコードに学ぶインターネットとウェブ技術」  の書籍を読んだことがある程度です。\nTCPプログラミング こちらのサイトを参考にさせていただきました Geekなぺーじ Linuxネットワークプログラミング\nサーバー サーバーはクライアントからの接続要求を待ちますが、どのように待つか設定します。\n ソケットを作る IPアドレスとポートを設定する クライアントから通信接続要求が来るまでプログラムを停止し接続後にプログラムを再開する データを送信する ソケットを閉じて通信接続を終了する  クライアント クライアントは特定のIPアドレス、TCPポート番号で接続待ちをするサーバーに対して接続要求を出します。\n ソケットを作る 接続先の指定 接続する サーバーからデータを受信  今回作ったもののソケットAPI callのサーバー、クライアントの関係を表すとこんな感じです。\n  ソースコードはこちら nito95/clang-socket-programming\nサーバーもクライアントもローカルなのでクライアント側で設定した接続先のIPは127.0.0.1ですが、ここは本来 gethostbyname でWinSockに名前解決を任せます。\nこれはサーバーとクライアントが繋がるとサーバーからクライアントにメッセージが送られ接続が切れる、という片手落ちなものです。 サーバーとしてあるべきはマルチスレッドで複数のクライアントと接続し、クライアントからの要求を受けたらクライアントにメッセージを返し、接続を切り再び接続要求待ち状態にするのがよいですね。\n初めてOSI参照モデルでいうL3まで下りて理解が深まりました。これ以降は全然作り込んではないですが、もしCで基本的なライブラリだけでサーバーとクライアントを作ってみる系の良い教材があれば試してみたいなと思います。\n","wordCount":"43","inLanguage":"en","datePublished":"2020-04-10T00:00:00Z","dateModified":"2020-04-10T00:00:00Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://nito95.github.io/posts/2020-04-10/"},"publisher":{"@type":"Organization","name":"nito95 blog","logo":{"@type":"ImageObject","url":"https://nito95.github.io/%3Clink%20/%20abs%20url%3E"}}}</script></head><body id=top><script>localStorage.getItem("pref-theme")==="dark"&&document.body.classList.add('dark')</script><noscript><style type=text/css>#theme-toggle,.top-link{display:none}</style></noscript><header class=header><nav class=nav><div class=logo><a href=https://nito95.github.io/ accesskey=h title="nito95 blog (Alt + H)">nito95 blog</a>
-<span class=logo-switches><button id=theme-toggle accesskey=t title="(Alt + T)"><svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></button></span></div><ul id=menu><li><a href=https://nito95.github.io/about/ title=About><span>About</span></a></li></ul></nav></header><main class=main><article class=post-single><header class=post-header><h1 class=post-title>CでTCPソケットプログラミング</h1><div class=post-meta>April 10, 2020</div></header><div class=post-content><p>今関わっているプロジェクトで、3rd Party製のドラレコから流れるGPSと動画データを弊社のプラットフォームに投げ込むアダプターの開発をしています。</p><p>この3rd Partyデバイスとの通信方法が独自規格でして。。。通信方法について書かれたPDFがあり、こうやって通信を開始してね、このタイミングでACKしてね、危険運転があったらこういうバイナリを送るよ、とか詳細に書いてあるわけです。</p><p>ベテランのバックエンドエンジニアの人やファームウェアの人が通信部分をゴリゴリ作ってくださったのですが、コードを読んでも何がなんだかサッパリわかりませんでした。Ruby言語自体のコードの中身を見て、そこに書かれたCのコードを読んで、システムコールの仕様を調べては「よくわからんぞ」となっておりました。
-そのときに「ソケットプログラミングしてみるといいよ」とアドバイスをもらったので、C言語でTCPソケットを実装してお勉強してみました。</p><p>ちなみにネットワークに関しての知識は</p><ul><li>「<a href=https://www.amazon.co.jp/dp/B0827QNDNT/>マスタリング TCP/IP 入門編</a>」</li><li>「<a href=https://www.amazon.co.jp/dp/4873118042/>Real World HTTP - 歴史とコードに学ぶインターネットとウェブ技術</a>」</li></ul><p>の書籍を読んだことがある程度です。</p><h3 id=tcpプログラミング>TCPプログラミング<a hidden class=anchor aria-hidden=true href=#tcpプログラミング>#</a></h3><p>こちらのサイトを参考にさせていただきました
-<a href=https://www.geekpage.jp/programming/linux-network/>Geekなぺーじ Linuxネットワークプログラミング</a></p><h4 id=サーバー>サーバー<a hidden class=anchor aria-hidden=true href=#サーバー>#</a></h4><p>サーバーはクライアントからの接続要求を待ちますが、どのように待つか設定します。</p><ul><li>ソケットを作る</li><li>IPアドレスとポートを設定する</li><li>クライアントから通信接続要求が来るまでプログラムを停止し接続後にプログラムを再開する</li><li>データを送信する</li><li>ソケットを閉じて通信接続を終了する</li></ul><h4 id=クライアント>クライアント<a hidden class=anchor aria-hidden=true href=#クライアント>#</a></h4><p>クライアントは特定のIPアドレス、TCPポート番号で接続待ちをするサーバーに対して接続要求を出します。</p><ul><li>ソケットを作る</li><li>接続先の指定</li><li>接続する</li><li>サーバーからデータを受信</li></ul><p>今回作ったもののソケットAPI callのサーバー、クライアントの関係を表すとこんな感じです。</p><figure><img loading=lazy src=/images/2020-04-10-1.png width=200></figure><p>ソースコードはこちら <a href=https://github.com/nito95/clang-socket-programming>nito95/clang-socket-programming</a></p><p>サーバーもクライアントもローカルなのでクライアント側で設定した接続先のIPは127.0.0.1ですが、ここは本来 <code>gethostbyname</code> でWinSockに名前解決を任せます。</p><p>これはサーバーとクライアントが繋がるとサーバーからクライアントにメッセージが送られ接続が切れる、という片手落ちなものです。
-サーバーとしてあるべきはマルチスレッドで複数のクライアントと接続し、クライアントからの要求を受けたらクライアントにメッセージを返し、接続を切り再び接続要求待ち状態にするのがよいですね。</p><p>初めてOSI参照モデルでいうL3まで下りて理解が深まりました。これ以降は全然作り込んではないですが、もしCで基本的なライブラリだけでサーバーとクライアントを作ってみる系の良い教材があれば試してみたいなと思います。</p></div><footer class=post-footer><nav class=paginav><a class=prev href=https://nito95.github.io/posts/2020-11-24/><span class=title>« Prev Page</span><br><span>AWS CDK (TS) で prod/staging 環境を分けて Fargate 構築</span></a>
-<a class=next href=https://nito95.github.io/posts/2020-03-21/><span class=title>Next Page »</span><br><span>ブロックチェーンサービスでのMetaMaskログイン機能の実装方法 (Rails + Vue.js)</span></a></nav></footer></article></main><footer class=footer><span>&copy; 2021 <a href=https://nito95.github.io/>nito95 blog</a></span>
-<span>Powered by
+初めてOSI参照モデルでいうL3まで下りて理解が深まりました。これ以降は全然作り込んではないですが、もしCで基本的なライブラリだけでサーバーとクライアントを作ってみる系の良い教材があれば試してみたいなと思います。">
+<script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://nito95.github.io/posts/"},{"@type":"ListItem","position":2,"name":"CでTCPソケットプログラミング","item":"https://nito95.github.io/posts/2020-04-10/"}]}</script>
+<script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"CでTCPソケットプログラミング","name":"CでTCPソケットプログラミング","description":"今関わっているプロジェクトで、3rd Party製のドラレコから流れるGPSと動画データを弊社のプラットフォームに投げ込むアダプターの開発をしています。\nこの3rd Partyデバイスとの通信方法が独自規格でして。。。通信方法について書かれたPDFがあり、こうやって通信を開始してね、このタイミングでACKしてね、危険運転があったらこういうバイナリを送るよ、とか詳細に書いてあるわけです。\nベテランのバックエンドエンジニアの人やファームウェアの人が通信部分をゴリゴリ作ってくださったのですが、コードを読んでも何がなんだかサッパリわかりませんでした。Ruby言語自体のコードの中身を見て、そこに書かれたCのコードを読んで、システムコールの仕様を調べては「よくわからんぞ」となっておりました。 そのときに「ソケットプログラミングしてみるといいよ」とアドバイスをもらったので、C言語でTCPソケットを実装してお勉強してみました。\nちなみにネットワークに関しての知識は\n 「マスタリング TCP/IP 入門編」 「Real World HTTP - 歴史とコードに学ぶインターネットとウェブ技術」  の書籍を読んだことがある程度です。\nTCPプログラミング こちらのサイトを参考にさせていただきました Geekなぺーじ Linuxネットワークプログラミング\nサーバー サーバーはクライアントからの接続要求を待ちますが、どのように待つか設定します。\n ソケットを作る IPアドレスとポートを設定する クライアントから通信接続要求が来るまでプログラムを停止し接続後にプログラムを再開する データを送信する ソケットを閉じて通信接続を終了する  クライアント クライアントは特定のIPアドレス、TCPポート番号で接続待ちをするサーバーに対して接続要求を出します。\n ソケットを作る 接続先の指定 接続する サーバーからデータを受信  今回作ったもののソケットAPI callのサーバー、クライアントの関係を表すとこんな感じです。\n  ソースコードはこちら nito95/clang-socket-programming\nサーバーもクライアントもローカルなのでクライアント側で設定した接続先のIPは127.0.0.1ですが、ここは本来 gethostbyname でWinSockに名前解決を任せます。\nこれはサーバーとクライアントが繋がるとサーバーからクライアントにメッセージが送られ接続が切れる、という片手落ちなものです。 サーバーとしてあるべきはマルチスレッドで複数のクライアントと接続し、クライアントからの要求を受けたらクライアントにメッセージを返し、接続を切り再び接続要求待ち状態にするのがよいですね。\n初めてOSI参照モデルでいうL3まで下りて理解が深まりました。これ以降は全然作り込んではないですが、もしCで基本的なライブラリだけでサーバーとクライアントを作ってみる系の良い教材があれば試してみたいなと思います。","keywords":[],"articleBody":"今関わっているプロジェクトで、3rd Party製のドラレコから流れるGPSと動画データを弊社のプラットフォームに投げ込むアダプターの開発をしています。\nこの3rd Partyデバイスとの通信方法が独自規格でして。。。通信方法について書かれたPDFがあり、こうやって通信を開始してね、このタイミングでACKしてね、危険運転があったらこういうバイナリを送るよ、とか詳細に書いてあるわけです。\nベテランのバックエンドエンジニアの人やファームウェアの人が通信部分をゴリゴリ作ってくださったのですが、コードを読んでも何がなんだかサッパリわかりませんでした。Ruby言語自体のコードの中身を見て、そこに書かれたCのコードを読んで、システムコールの仕様を調べては「よくわからんぞ」となっておりました。 そのときに「ソケットプログラミングしてみるといいよ」とアドバイスをもらったので、C言語でTCPソケットを実装してお勉強してみました。\nちなみにネットワークに関しての知識は\n 「マスタリング TCP/IP 入門編」 「Real World HTTP - 歴史とコードに学ぶインターネットとウェブ技術」  の書籍を読んだことがある程度です。\nTCPプログラミング こちらのサイトを参考にさせていただきました Geekなぺーじ Linuxネットワークプログラミング\nサーバー サーバーはクライアントからの接続要求を待ちますが、どのように待つか設定します。\n ソケットを作る IPアドレスとポートを設定する クライアントから通信接続要求が来るまでプログラムを停止し接続後にプログラムを再開する データを送信する ソケットを閉じて通信接続を終了する  クライアント クライアントは特定のIPアドレス、TCPポート番号で接続待ちをするサーバーに対して接続要求を出します。\n ソケットを作る 接続先の指定 接続する サーバーからデータを受信  今回作ったもののソケットAPI callのサーバー、クライアントの関係を表すとこんな感じです。\n  ソースコードはこちら nito95/clang-socket-programming\nサーバーもクライアントもローカルなのでクライアント側で設定した接続先のIPは127.0.0.1ですが、ここは本来 gethostbyname でWinSockに名前解決を任せます。\nこれはサーバーとクライアントが繋がるとサーバーからクライアントにメッセージが送られ接続が切れる、という片手落ちなものです。 サーバーとしてあるべきはマルチスレッドで複数のクライアントと接続し、クライアントからの要求を受けたらクライアントにメッセージを返し、接続を切り再び接続要求待ち状態にするのがよいですね。\n初めてOSI参照モデルでいうL3まで下りて理解が深まりました。これ以降は全然作り込んではないですが、もしCで基本的なライブラリだけでサーバーとクライアントを作ってみる系の良い教材があれば試してみたいなと思います。\n","wordCount":"43","inLanguage":"en","datePublished":"2020-04-10T00:00:00Z","dateModified":"2020-04-10T00:00:00Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://nito95.github.io/posts/2020-04-10/"},"publisher":{"@type":"Organization","name":"nito95 blog","logo":{"@type":"ImageObject","url":"https://nito95.github.io/%3Clink%20/%20abs%20url%3E"}}}</script>
+</head>
+<body id=top>
+<script>localStorage.getItem("pref-theme")==="dark"&&document.body.classList.add('dark')</script>
+<noscript>
+<style type=text/css>#theme-toggle,.top-link{display:none}</style>
+</noscript>
+<header class=header>
+<nav class=nav>
+<div class=logo>
+<a href=https://nito95.github.io/ accesskey=h title="nito95 blog (Alt + H)">nito95 blog</a>
+<span class=logo-switches>
+<button id=theme-toggle accesskey=t title="(Alt + T)"><svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+</span>
+</div>
+<ul id=menu>
+<li>
+<a href=https://nito95.github.io/about/ title=About>
+<span>About</span>
+</a>
+</li>
+</ul>
+</nav>
+</header>
+<main class=main>
+<article class=post-single>
+<header class=post-header>
+<h1 class=post-title>
+CでTCPソケットプログラミング
+</h1>
+<div class=post-meta>April 10, 2020
+</div>
+</header>
+<div class=post-content><p>今関わっているプロジェクトで、3rd Party製のドラレコから流れるGPSと動画データを弊社のプラットフォームに投げ込むアダプターの開発をしています。</p>
+<p>この3rd Partyデバイスとの通信方法が独自規格でして。。。通信方法について書かれたPDFがあり、こうやって通信を開始してね、このタイミングでACKしてね、危険運転があったらこういうバイナリを送るよ、とか詳細に書いてあるわけです。</p>
+<p>ベテランのバックエンドエンジニアの人やファームウェアの人が通信部分をゴリゴリ作ってくださったのですが、コードを読んでも何がなんだかサッパリわかりませんでした。Ruby言語自体のコードの中身を見て、そこに書かれたCのコードを読んで、システムコールの仕様を調べては「よくわからんぞ」となっておりました。
+そのときに「ソケットプログラミングしてみるといいよ」とアドバイスをもらったので、C言語でTCPソケットを実装してお勉強してみました。</p>
+<p>ちなみにネットワークに関しての知識は</p>
+<ul>
+<li>「<a href=https://www.amazon.co.jp/dp/B0827QNDNT/>マスタリング TCP/IP 入門編</a>」</li>
+<li>「<a href=https://www.amazon.co.jp/dp/4873118042/>Real World HTTP - 歴史とコードに学ぶインターネットとウェブ技術</a>」</li>
+</ul>
+<p>の書籍を読んだことがある程度です。</p>
+<h3 id=tcpプログラミング>TCPプログラミング<a hidden class=anchor aria-hidden=true href=#tcpプログラミング>#</a></h3>
+<p>こちらのサイトを参考にさせていただきました
+<a href=https://www.geekpage.jp/programming/linux-network/>Geekなぺーじ Linuxネットワークプログラミング</a></p>
+<h4 id=サーバー>サーバー<a hidden class=anchor aria-hidden=true href=#サーバー>#</a></h4>
+<p>サーバーはクライアントからの接続要求を待ちますが、どのように待つか設定します。</p>
+<ul>
+<li>ソケットを作る</li>
+<li>IPアドレスとポートを設定する</li>
+<li>クライアントから通信接続要求が来るまでプログラムを停止し接続後にプログラムを再開する</li>
+<li>データを送信する</li>
+<li>ソケットを閉じて通信接続を終了する</li>
+</ul>
+<h4 id=クライアント>クライアント<a hidden class=anchor aria-hidden=true href=#クライアント>#</a></h4>
+<p>クライアントは特定のIPアドレス、TCPポート番号で接続待ちをするサーバーに対して接続要求を出します。</p>
+<ul>
+<li>ソケットを作る</li>
+<li>接続先の指定</li>
+<li>接続する</li>
+<li>サーバーからデータを受信</li>
+</ul>
+<p>今回作ったもののソケットAPI callのサーバー、クライアントの関係を表すとこんな感じです。</p>
+<figure>
+<img loading=lazy src=/images/2020-04-10-1.png width=200>
+</figure>
+<p>ソースコードはこちら <a href=https://github.com/nito95/clang-socket-programming>nito95/clang-socket-programming</a></p>
+<p>サーバーもクライアントもローカルなのでクライアント側で設定した接続先のIPは127.0.0.1ですが、ここは本来 <code>gethostbyname</code> でWinSockに名前解決を任せます。</p>
+<p>これはサーバーとクライアントが繋がるとサーバーからクライアントにメッセージが送られ接続が切れる、という片手落ちなものです。
+サーバーとしてあるべきはマルチスレッドで複数のクライアントと接続し、クライアントからの要求を受けたらクライアントにメッセージを返し、接続を切り再び接続要求待ち状態にするのがよいですね。</p>
+<p>初めてOSI参照モデルでいうL3まで下りて理解が深まりました。これ以降は全然作り込んではないですが、もしCで基本的なライブラリだけでサーバーとクライアントを作ってみる系の良い教材があれば試してみたいなと思います。</p>
+</div>
+<footer class=post-footer>
+<nav class=paginav>
+<a class=prev href=https://nito95.github.io/posts/2020-07-08/>
+<span class=title>« Prev Page</span>
+<br>
+<span>Tile38 による Geofencing と R-tree</span>
+</a>
+<a class=next href=https://nito95.github.io/posts/2020-03-21/>
+<span class=title>Next Page »</span>
+<br>
+<span>ブロックチェーンサービスでのMetaMaskログイン機能の実装方法 (Rails + Vue.js)</span>
+</a>
+</nav>
+</footer>
+</article>
+</main>
+<footer class=footer>
+<span>&copy; 2021 <a href=https://nito95.github.io/>nito95 blog</a></span>
+<span>
+Powered by
 <a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
-        <a href=https://git.io/hugopapermod rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top aria-label="go to top" title="Go to Top (Alt + G)"><button class=top-link id=top-link type=button accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg></button></a>
-<script>let menu=document.getElementById('menu');menu.scrollLeft=localStorage.getItem("menu-scroll-position"),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)},document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener("click",function(b){b.preventDefault();var a=this.getAttribute("href").substr(1);window.matchMedia('(prefers-reduced-motion: reduce)').matches?document.querySelector(`[id='${decodeURIComponent(a)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(a)}']`).scrollIntoView({behavior:"smooth"}),a==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${a}`)})})</script><script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script><script>document.getElementById("theme-toggle").addEventListener("click",()=>{document.body.className.includes("dark")?(document.body.classList.remove('dark'),localStorage.setItem("pref-theme",'light')):(document.body.classList.add('dark'),localStorage.setItem("pref-theme",'dark'))})</script></body></html>
+        <a href=https://git.io/hugopapermod rel=noopener target=_blank>PaperMod</a>
+</span>
+</footer>
+<a href=#top aria-label="go to top" title="Go to Top (Alt + G)">
+<button class=top-link id=top-link type=button accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
+</button>
+</a>
+<script>let menu=document.getElementById('menu');menu.scrollLeft=localStorage.getItem("menu-scroll-position"),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)},document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener("click",function(b){b.preventDefault();var a=this.getAttribute("href").substr(1);window.matchMedia('(prefers-reduced-motion: reduce)').matches?document.querySelector(`[id='${decodeURIComponent(a)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(a)}']`).scrollIntoView({behavior:"smooth"}),a==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${a}`)})})</script>
+<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
+<script>document.getElementById("theme-toggle").addEventListener("click",()=>{document.body.className.includes("dark")?(document.body.classList.remove('dark'),localStorage.setItem("pref-theme",'light')):(document.body.classList.add('dark'),localStorage.setItem("pref-theme",'dark'))})</script>
+</body>
+</html>
