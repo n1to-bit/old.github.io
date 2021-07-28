@@ -6,16 +6,14 @@
 <title>OR-Tools で解く Vehicle Routing Problem | nito95 blog</title>
 <meta name=keywords content="VRP">
 <meta name=description content="現在、自分は SmartDrive Fleet という SaaS プロダクトを担当しています。 デバイスを従業員の車両に取り付けることで、車両管理や運転日報、安全運転診断やジオフェンシングといった機能をWebやアプリで提供しています。
-ユーザーの業種は幅広いのですが、その中でも介護・福祉業界のユーザーが一定の割合を占めています。 例えばデイケアの事業所では朝夕に利用者を送迎する必要があり、同じ時間帯に同時に3~4台、規模によっては10~20台前後の車を使うことがあります。
+ユーザーの業種は幅広いのですが、その中でも通所介護や通所リハビリテーション (以後 デイケア) を行っている事業所が一定の割合を占めています。 デイケアでは朝夕に利用者を送迎する必要があり、同じ時間帯に同時に3~4台、規模によっては10~20台前後の車を使うことがあります。
 各利用者は家にピックアップする時間がそれぞれ決まっており、事業所に来る、つまりサービスを受け始める時間も決まっているのでなかなかシビアな朝の迎えをしています。 事業所の人は円滑に送迎が行われているのか管理をする必要があり、助手席に座るもう一人のスタッフが電話をして逐一報告を管理者にしている形態をとっていました。 それを SmartDrive Fleet を使うことで助手席の人はいらなくなり、リアルタイムでどこにいるのか管理ができるという使われ方をしています。
-SmartDrive Fleet を使っているいくつかのデイケアの事業所の方から 「利用者に休みが出たり、体験入所で新たに送迎する利用者が出たりするときにルートを計画するのがとても大変。土地勘のある人が非常に時間をかけて計画表を作る必要がある。」という話を受けました。
-これを解決するためのツールはないかなと探していると Google OR-Tools というライブラリを発見したのでこれを試しに使ってみました。
-OR-Tools は Google 製の最適化ツールです。線型計画法、貢献度分配問題、ナップサック問題、巡回セールスマン問題など様々な最適化問題を扱えます。 OR-ToolsはOSSで無料で使えて、言語は Python, C++, C#, Java に対応しています。今回はC++で試してみます。
-今回やりたい送迎ルート作成問題は Vehicle Routing Problem (以下 VRP) であり、VRP は OR-Tools で解くことができます。 VRP は NP-hard (NP困難) に分類される問題で、計算完了までのかかる時間が指数関数的に増えるとされています。 OR-ToolsではVRPを数理的に解いていますが、他にディープラーニングの応用や量子コンピュータといったアプローチも取られているみたいです。
-VRP はどんなものか、OR-Tools の Guide に載ってる例と図を拝借して書きます。 (https://developers.google.com/optimization/routing/vrp)
-  真ん中の黒ノードが事業所、青ノードがピックアップする利用者宅とし、4台の車を使い、各車は最大で4人まで利用者を載せられることとします。ノード内の数字は ID です。
-VRP を解くのに必要なのは、あるノードからあるノードへの距離情報です。17ノードあるので 17 * 17 のマトリックスで距離を表します。
-ちなみに OR-Tools を実際にプロダクトに使う場合は、各利用者の地点座標からこのマトリックスを作る必要があります。 ありがたいことに Google Map には Distance Matrix API があり、住所を配列で送ることで各住所間の距離をマトリックスで返してくれます。しかしこのAPIは上限があり、16個までしか配列を送れません。">
+ユーザーヒアリングを行ったときに、いくつかのデイケアの事業所の方から 「利用者に休みが出たり、体験入所で新たに送迎する利用者が出たりするときにルートを計画するのがとても大変。土地勘のある人が非常に時間をかけて計画表を作る必要がある。」という話を受けました。
+これを解決するためのツールはないかなと探していると Google OR-Tools というライブラリを発見したのでこれを試しに使ってみました。 OR-Tools は Google 製の最適化ツールです。線型計画法、貢献度分配問題、ナップサック問題、巡回セールスマン問題など様々な最適化問題を扱えます。 OR-ToolsはOSSで無料で使えて、言語は Python, C++, C#, Java に対応しています。今回はC++で試してみます。
+今回やりたい送迎ルート作成問題は Vehicle Routing Problem (以下 VRP) であり、VRP は OR-Tools で解くことができます。 VRP は NP-hard (NP困難) に分類される問題で、計算完了までのかかる時間が指数関数的に増えるとされています。 OR-ToolsではVRPを数理的に解いていますが、他にディープラーニングの応用や量子コンピュータといったアプローチも取られているようで、ググると論文がヒットします。
+VRP はどんなものか、OR-Tools の Guide に載ってる図を拝借して書きます。 (https://developers.google.com/optimization/routing/vrp)
+  真ん中の黒ノードが事業所、青ノードがピックアップする利用者宅とし、4台の車両を使います。ノード内の数字は ID です。
+VRP を解くのに必要なのは、あるノードからあるノードへの距離情報です。17ノードあるので 17 * 17 のマトリックスで距離を表します。 ちなみに OR-Tools を実際にプロダクトに使う場合は、各利用者の地点座標からこのマトリックスを作る必要があります。 ありがたいことに Google Map には Distance Matrix API があり、住所を配列で送ることで各住所間の距離をマトリックスで返してくれます。ただし16個までしか配列を送れません。もし32個の地点の distance matrix を得たい場合には API を4回 call する必要があります。">
 <meta name=author content>
 <link rel=canonical href=https://nito95.github.io/posts/2018-12-28/>
 <meta name=google-site-verification content="G-FT3WYS86E7">
@@ -32,16 +30,14 @@ VRP を解くのに必要なのは、あるノードからあるノードへの�
 <meta name=generator content="Hugo 0.86.0">
 <meta property="og:title" content="OR-Tools で解く Vehicle Routing Problem">
 <meta property="og:description" content="現在、自分は SmartDrive Fleet という SaaS プロダクトを担当しています。 デバイスを従業員の車両に取り付けることで、車両管理や運転日報、安全運転診断やジオフェンシングといった機能をWebやアプリで提供しています。
-ユーザーの業種は幅広いのですが、その中でも介護・福祉業界のユーザーが一定の割合を占めています。 例えばデイケアの事業所では朝夕に利用者を送迎する必要があり、同じ時間帯に同時に3~4台、規模によっては10~20台前後の車を使うことがあります。
+ユーザーの業種は幅広いのですが、その中でも通所介護や通所リハビリテーション (以後 デイケア) を行っている事業所が一定の割合を占めています。 デイケアでは朝夕に利用者を送迎する必要があり、同じ時間帯に同時に3~4台、規模によっては10~20台前後の車を使うことがあります。
 各利用者は家にピックアップする時間がそれぞれ決まっており、事業所に来る、つまりサービスを受け始める時間も決まっているのでなかなかシビアな朝の迎えをしています。 事業所の人は円滑に送迎が行われているのか管理をする必要があり、助手席に座るもう一人のスタッフが電話をして逐一報告を管理者にしている形態をとっていました。 それを SmartDrive Fleet を使うことで助手席の人はいらなくなり、リアルタイムでどこにいるのか管理ができるという使われ方をしています。
-SmartDrive Fleet を使っているいくつかのデイケアの事業所の方から 「利用者に休みが出たり、体験入所で新たに送迎する利用者が出たりするときにルートを計画するのがとても大変。土地勘のある人が非常に時間をかけて計画表を作る必要がある。」という話を受けました。
-これを解決するためのツールはないかなと探していると Google OR-Tools というライブラリを発見したのでこれを試しに使ってみました。
-OR-Tools は Google 製の最適化ツールです。線型計画法、貢献度分配問題、ナップサック問題、巡回セールスマン問題など様々な最適化問題を扱えます。 OR-ToolsはOSSで無料で使えて、言語は Python, C++, C#, Java に対応しています。今回はC++で試してみます。
-今回やりたい送迎ルート作成問題は Vehicle Routing Problem (以下 VRP) であり、VRP は OR-Tools で解くことができます。 VRP は NP-hard (NP困難) に分類される問題で、計算完了までのかかる時間が指数関数的に増えるとされています。 OR-ToolsではVRPを数理的に解いていますが、他にディープラーニングの応用や量子コンピュータといったアプローチも取られているみたいです。
-VRP はどんなものか、OR-Tools の Guide に載ってる例と図を拝借して書きます。 (https://developers.google.com/optimization/routing/vrp)
-  真ん中の黒ノードが事業所、青ノードがピックアップする利用者宅とし、4台の車を使い、各車は最大で4人まで利用者を載せられることとします。ノード内の数字は ID です。
-VRP を解くのに必要なのは、あるノードからあるノードへの距離情報です。17ノードあるので 17 * 17 のマトリックスで距離を表します。
-ちなみに OR-Tools を実際にプロダクトに使う場合は、各利用者の地点座標からこのマトリックスを作る必要があります。 ありがたいことに Google Map には Distance Matrix API があり、住所を配列で送ることで各住所間の距離をマトリックスで返してくれます。しかしこのAPIは上限があり、16個までしか配列を送れません。">
+ユーザーヒアリングを行ったときに、いくつかのデイケアの事業所の方から 「利用者に休みが出たり、体験入所で新たに送迎する利用者が出たりするときにルートを計画するのがとても大変。土地勘のある人が非常に時間をかけて計画表を作る必要がある。」という話を受けました。
+これを解決するためのツールはないかなと探していると Google OR-Tools というライブラリを発見したのでこれを試しに使ってみました。 OR-Tools は Google 製の最適化ツールです。線型計画法、貢献度分配問題、ナップサック問題、巡回セールスマン問題など様々な最適化問題を扱えます。 OR-ToolsはOSSで無料で使えて、言語は Python, C++, C#, Java に対応しています。今回はC++で試してみます。
+今回やりたい送迎ルート作成問題は Vehicle Routing Problem (以下 VRP) であり、VRP は OR-Tools で解くことができます。 VRP は NP-hard (NP困難) に分類される問題で、計算完了までのかかる時間が指数関数的に増えるとされています。 OR-ToolsではVRPを数理的に解いていますが、他にディープラーニングの応用や量子コンピュータといったアプローチも取られているようで、ググると論文がヒットします。
+VRP はどんなものか、OR-Tools の Guide に載ってる図を拝借して書きます。 (https://developers.google.com/optimization/routing/vrp)
+  真ん中の黒ノードが事業所、青ノードがピックアップする利用者宅とし、4台の車両を使います。ノード内の数字は ID です。
+VRP を解くのに必要なのは、あるノードからあるノードへの距離情報です。17ノードあるので 17 * 17 のマトリックスで距離を表します。 ちなみに OR-Tools を実際にプロダクトに使う場合は、各利用者の地点座標からこのマトリックスを作る必要があります。 ありがたいことに Google Map には Distance Matrix API があり、住所を配列で送ることで各住所間の距離をマトリックスで返してくれます。ただし16個までしか配列を送れません。もし32個の地点の distance matrix を得たい場合には API を4回 call する必要があります。">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://nito95.github.io/posts/2018-12-28/"><meta property="article:section" content="posts">
 <meta property="article:published_time" content="2018-12-28T00:00:00+00:00">
@@ -49,18 +45,16 @@ VRP を解くのに必要なのは、あるノードからあるノードへの�
 <meta name=twitter:card content="summary">
 <meta name=twitter:title content="OR-Tools で解く Vehicle Routing Problem">
 <meta name=twitter:description content="現在、自分は SmartDrive Fleet という SaaS プロダクトを担当しています。 デバイスを従業員の車両に取り付けることで、車両管理や運転日報、安全運転診断やジオフェンシングといった機能をWebやアプリで提供しています。
-ユーザーの業種は幅広いのですが、その中でも介護・福祉業界のユーザーが一定の割合を占めています。 例えばデイケアの事業所では朝夕に利用者を送迎する必要があり、同じ時間帯に同時に3~4台、規模によっては10~20台前後の車を使うことがあります。
+ユーザーの業種は幅広いのですが、その中でも通所介護や通所リハビリテーション (以後 デイケア) を行っている事業所が一定の割合を占めています。 デイケアでは朝夕に利用者を送迎する必要があり、同じ時間帯に同時に3~4台、規模によっては10~20台前後の車を使うことがあります。
 各利用者は家にピックアップする時間がそれぞれ決まっており、事業所に来る、つまりサービスを受け始める時間も決まっているのでなかなかシビアな朝の迎えをしています。 事業所の人は円滑に送迎が行われているのか管理をする必要があり、助手席に座るもう一人のスタッフが電話をして逐一報告を管理者にしている形態をとっていました。 それを SmartDrive Fleet を使うことで助手席の人はいらなくなり、リアルタイムでどこにいるのか管理ができるという使われ方をしています。
-SmartDrive Fleet を使っているいくつかのデイケアの事業所の方から 「利用者に休みが出たり、体験入所で新たに送迎する利用者が出たりするときにルートを計画するのがとても大変。土地勘のある人が非常に時間をかけて計画表を作る必要がある。」という話を受けました。
-これを解決するためのツールはないかなと探していると Google OR-Tools というライブラリを発見したのでこれを試しに使ってみました。
-OR-Tools は Google 製の最適化ツールです。線型計画法、貢献度分配問題、ナップサック問題、巡回セールスマン問題など様々な最適化問題を扱えます。 OR-ToolsはOSSで無料で使えて、言語は Python, C++, C#, Java に対応しています。今回はC++で試してみます。
-今回やりたい送迎ルート作成問題は Vehicle Routing Problem (以下 VRP) であり、VRP は OR-Tools で解くことができます。 VRP は NP-hard (NP困難) に分類される問題で、計算完了までのかかる時間が指数関数的に増えるとされています。 OR-ToolsではVRPを数理的に解いていますが、他にディープラーニングの応用や量子コンピュータといったアプローチも取られているみたいです。
-VRP はどんなものか、OR-Tools の Guide に載ってる例と図を拝借して書きます。 (https://developers.google.com/optimization/routing/vrp)
-  真ん中の黒ノードが事業所、青ノードがピックアップする利用者宅とし、4台の車を使い、各車は最大で4人まで利用者を載せられることとします。ノード内の数字は ID です。
-VRP を解くのに必要なのは、あるノードからあるノードへの距離情報です。17ノードあるので 17 * 17 のマトリックスで距離を表します。
-ちなみに OR-Tools を実際にプロダクトに使う場合は、各利用者の地点座標からこのマトリックスを作る必要があります。 ありがたいことに Google Map には Distance Matrix API があり、住所を配列で送ることで各住所間の距離をマトリックスで返してくれます。しかしこのAPIは上限があり、16個までしか配列を送れません。">
+ユーザーヒアリングを行ったときに、いくつかのデイケアの事業所の方から 「利用者に休みが出たり、体験入所で新たに送迎する利用者が出たりするときにルートを計画するのがとても大変。土地勘のある人が非常に時間をかけて計画表を作る必要がある。」という話を受けました。
+これを解決するためのツールはないかなと探していると Google OR-Tools というライブラリを発見したのでこれを試しに使ってみました。 OR-Tools は Google 製の最適化ツールです。線型計画法、貢献度分配問題、ナップサック問題、巡回セールスマン問題など様々な最適化問題を扱えます。 OR-ToolsはOSSで無料で使えて、言語は Python, C++, C#, Java に対応しています。今回はC++で試してみます。
+今回やりたい送迎ルート作成問題は Vehicle Routing Problem (以下 VRP) であり、VRP は OR-Tools で解くことができます。 VRP は NP-hard (NP困難) に分類される問題で、計算完了までのかかる時間が指数関数的に増えるとされています。 OR-ToolsではVRPを数理的に解いていますが、他にディープラーニングの応用や量子コンピュータといったアプローチも取られているようで、ググると論文がヒットします。
+VRP はどんなものか、OR-Tools の Guide に載ってる図を拝借して書きます。 (https://developers.google.com/optimization/routing/vrp)
+  真ん中の黒ノードが事業所、青ノードがピックアップする利用者宅とし、4台の車両を使います。ノード内の数字は ID です。
+VRP を解くのに必要なのは、あるノードからあるノードへの距離情報です。17ノードあるので 17 * 17 のマトリックスで距離を表します。 ちなみに OR-Tools を実際にプロダクトに使う場合は、各利用者の地点座標からこのマトリックスを作る必要があります。 ありがたいことに Google Map には Distance Matrix API があり、住所を配列で送ることで各住所間の距離をマトリックスで返してくれます。ただし16個までしか配列を送れません。もし32個の地点の distance matrix を得たい場合には API を4回 call する必要があります。">
 <script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://nito95.github.io/posts/"},{"@type":"ListItem","position":2,"name":"OR-Tools で解く Vehicle Routing Problem","item":"https://nito95.github.io/posts/2018-12-28/"}]}</script>
-<script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"OR-Tools で解く Vehicle Routing Problem","name":"OR-Tools で解く Vehicle Routing Problem","description":"現在、自分は SmartDrive Fleet という SaaS プロダクトを担当しています。 デバイスを従業員の車両に取り付けることで、車両管理や運転日報、安全運転診断やジオフェンシングといった機能をWebやアプリで提供しています。\nユーザーの業種は幅広いのですが、その中でも介護・福祉業界のユーザーが一定の割合を占めています。 例えばデイケアの事業所では朝夕に利用者を送迎する必要があり、同じ時間帯に同時に3~4台、規模によっては10~20台前後の車を使うことがあります。\n各利用者は家にピックアップする時間がそれぞれ決まっており、事業所に来る、つまりサービスを受け始める時間も決まっているのでなかなかシビアな朝の迎えをしています。 事業所の人は円滑に送迎が行われているのか管理をする必要があり、助手席に座るもう一人のスタッフが電話をして逐一報告を管理者にしている形態をとっていました。 それを SmartDrive Fleet を使うことで助手席の人はいらなくなり、リアルタイムでどこにいるのか管理ができるという使われ方をしています。\nSmartDrive Fleet を使っているいくつかのデイケアの事業所の方から 「利用者に休みが出たり、体験入所で新たに送迎する利用者が出たりするときにルートを計画するのがとても大変。土地勘のある人が非常に時間をかけて計画表を作る必要がある。」という話を受けました。\nこれを解決するためのツールはないかなと探していると Google OR-Tools というライブラリを発見したのでこれを試しに使ってみました。\nOR-Tools は Google 製の最適化ツールです。線型計画法、貢献度分配問題、ナップサック問題、巡回セールスマン問題など様々な最適化問題を扱えます。 OR-ToolsはOSSで無料で使えて、言語は Python, C++, C#, Java に対応しています。今回はC++で試してみます。\n今回やりたい送迎ルート作成問題は Vehicle Routing Problem (以下 VRP) であり、VRP は OR-Tools で解くことができます。 VRP は NP-hard (NP困難) に分類される問題で、計算完了までのかかる時間が指数関数的に増えるとされています。 OR-ToolsではVRPを数理的に解いていますが、他にディープラーニングの応用や量子コンピュータといったアプローチも取られているみたいです。\nVRP はどんなものか、OR-Tools の Guide に載ってる例と図を拝借して書きます。 (https://developers.google.com/optimization/routing/vrp)\n  真ん中の黒ノードが事業所、青ノードがピックアップする利用者宅とし、4台の車を使い、各車は最大で4人まで利用者を載せられることとします。ノード内の数字は ID です。\nVRP を解くのに必要なのは、あるノードからあるノードへの距離情報です。17ノードあるので 17 * 17 のマトリックスで距離を表します。\nちなみに OR-Tools を実際にプロダクトに使う場合は、各利用者の地点座標からこのマトリックスを作る必要があります。 ありがたいことに Google Map には Distance Matrix API があり、住所を配列で送ることで各住所間の距離をマトリックスで返してくれます。しかしこのAPIは上限があり、16個までしか配列を送れません。","keywords":["VRP"],"articleBody":"現在、自分は SmartDrive Fleet という SaaS プロダクトを担当しています。 デバイスを従業員の車両に取り付けることで、車両管理や運転日報、安全運転診断やジオフェンシングといった機能をWebやアプリで提供しています。\nユーザーの業種は幅広いのですが、その中でも介護・福祉業界のユーザーが一定の割合を占めています。 例えばデイケアの事業所では朝夕に利用者を送迎する必要があり、同じ時間帯に同時に3~4台、規模によっては10~20台前後の車を使うことがあります。\n各利用者は家にピックアップする時間がそれぞれ決まっており、事業所に来る、つまりサービスを受け始める時間も決まっているのでなかなかシビアな朝の迎えをしています。 事業所の人は円滑に送迎が行われているのか管理をする必要があり、助手席に座るもう一人のスタッフが電話をして逐一報告を管理者にしている形態をとっていました。 それを SmartDrive Fleet を使うことで助手席の人はいらなくなり、リアルタイムでどこにいるのか管理ができるという使われ方をしています。\nSmartDrive Fleet を使っているいくつかのデイケアの事業所の方から 「利用者に休みが出たり、体験入所で新たに送迎する利用者が出たりするときにルートを計画するのがとても大変。土地勘のある人が非常に時間をかけて計画表を作る必要がある。」という話を受けました。\nこれを解決するためのツールはないかなと探していると Google OR-Tools というライブラリを発見したのでこれを試しに使ってみました。\nOR-Tools は Google 製の最適化ツールです。線型計画法、貢献度分配問題、ナップサック問題、巡回セールスマン問題など様々な最適化問題を扱えます。 OR-ToolsはOSSで無料で使えて、言語は Python, C++, C#, Java に対応しています。今回はC++で試してみます。\n今回やりたい送迎ルート作成問題は Vehicle Routing Problem (以下 VRP) であり、VRP は OR-Tools で解くことができます。 VRP は NP-hard (NP困難) に分類される問題で、計算完了までのかかる時間が指数関数的に増えるとされています。 OR-ToolsではVRPを数理的に解いていますが、他にディープラーニングの応用や量子コンピュータといったアプローチも取られているみたいです。\nVRP はどんなものか、OR-Tools の Guide に載ってる例と図を拝借して書きます。 (https://developers.google.com/optimization/routing/vrp)\n  真ん中の黒ノードが事業所、青ノードがピックアップする利用者宅とし、4台の車を使い、各車は最大で4人まで利用者を載せられることとします。ノード内の数字は ID です。\nVRP を解くのに必要なのは、あるノードからあるノードへの距離情報です。17ノードあるので 17 * 17 のマトリックスで距離を表します。\nちなみに OR-Tools を実際にプロダクトに使う場合は、各利用者の地点座標からこのマトリックスを作る必要があります。 ありがたいことに Google Map には Distance Matrix API があり、住所を配列で送ることで各住所間の距離をマトリックスで返してくれます。しかしこのAPIは上限があり、16個までしか配列を送れません。\ndistance matrix がわかったら DataModel を作成します。\nstruct DataModel { const std::vectorstd::vectorint64_t distance_matrix{ {0, 548, 776, 696, 582, 274, 502, 194, 308, 194, 536, 502, 388, 354, 468, 776, 662}, {548, 0, 684, 308, 194, 502, 730, 354, 696, 742, 1084, 594, 480, 674, 1016, 868, 1210}, {776, 684, 0, 992, 878, 502, 274, 810, 468, 742, 400, 1278, 1164, 1130, 788, 1552, 754}, {696, 308, 992, 0, 114, 650, 878, 502, 844, 890, 1232, 514, 628, 822, 1164, 560, 1358}, {582, 194, 878, 114, 0, 536, 764, 388, 730, 776, 1118, 400, 514, 708, 1050, 674, 1244}, {274, 502, 502, 650, 536, 0, 228, 308, 194, 240, 582, 776, 662, 628, 514, 1050, 708}, {502, 730, 274, 878, 764, 228, 0, 536, 194, 468, 354, 1004, 890, 856, 514, 1278, 480}, {194, 354, 810, 502, 388, 308, 536, 0, 342, 388, 730, 468, 354, 320, 662, 742, 856}, {308, 696, 468, 844, 730, 194, 194, 342, 0, 274, 388, 810, 696, 662, 320, 1084, 514}, {194, 742, 742, 890, 776, 240, 468, 388, 274, 0, 342, 536, 422, 388, 274, 810, 468}, {536, 1084, 400, 1232, 1118, 582, 354, 730, 388, 342, 0, 878, 764, 730, 388, 1152, 354}, {502, 594, 1278, 514, 400, 776, 1004, 468, 810, 536, 878, 0, 114, 308, 650, 274, 844}, {388, 480, 1164, 628, 514, 662, 890, 354, 696, 422, 764, 114, 0, 194, 536, 388, 730}, {354, 674, 1130, 822, 708, 628, 856, 320, 662, 388, 730, 308, 194, 0, 342, 422, 536}, {468, 1016, 788, 1164, 1050, 514, 514, 662, 320, 274, 388, 650, 536, 342, 0, 764, 194}, {776, 868, 1552, 560, 674, 1050, 1278, 742, 1084, 810, 1152, 274, 388, 422, 764, 0, 798}, {662, 1210, 754, 1358, 1244, 708, 480, 856, 514, 468, 354, 844, 730, 536, 194, 798, 0}, }; const int num_vehicles = 4; const RoutingIndexManager::NodeIndex depot{0}; }; この DataModel を使って RoutingIndexManager を作り、それを用いて RoutingModel を作成します。\nRoutingIndexManager manager(data.distance_matrix.size(), data.num_vehicles, data.depot); RoutingModel routing(manager); また、計算後の距離の callback を取得したいので RegisterTransitCallback() で callback を作成します。\nconst int transit_callback_index = routing.RegisterTransitCallback( [\u0026data, \u0026manager](int64_t from_index, int64_t to_index) - int64_t { // Convert from routing variable Index to distance matrix NodeIndex. auto from_node = manager.IndexToNode(from_index).value(); auto to_node = manager.IndexToNode(to_index).value(); return data.distance_matrix[from_node][to_node]; }); routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index); 次にパラメータ調整をします。\nSetGlobalSpanCostCoefficient() では各車両のルートの中で最も所要時間の長いルートをできるだけ小さくしようとする際に用いられる重み、コストです。 0 の場合は考慮がされないので、アルゴリズムは全車両合計の総走行時間が短くなるのであれば、ごく少数の車両に多くの利用者を割り当てて非常に長いルートを作成する一方、残りの車両にはゼロかごく少数の利用者だけを割り当てるような偏りの大きなルートができます。 デイケア事業においては持っているリソース (車両および人員) をできるだけフル活用し、あまり偏りが出ないようにしたいというケースが多いので、この値は調整する必要があります。\nrouting.AddDimension(transit_callback_index, 0, 3000, true, \"Distance\"); routing.GetMutableDimension(\"Distance\")-SetGlobalSpanCostCoefficient(100); 最後に SolveWithParameters() で結果が出力されます。結果を図示したもの↓\n  注意点としてはメタヒューリスティクスを用いているので最適性の保証はないです。つまり必ずしも全体最適解が求まるとは限りません。 条件によっては結果が悪くなるケース、複雑すぎて結果が出ないケースも出てくるので、その際にはパラメータで探索戦略を変えて試す必要があると思います。探索戦略には焼きなまし法、タブー探索法、貪欲法などあります。一部しか知らないので勉強してみる所存。(https://developers.google.com/optimization/routing/routing_options)\n非常に面白いツールなので色々触って遊んでみようと思います。\n","wordCount":"460","inLanguage":"en","datePublished":"2018-12-28T00:00:00Z","dateModified":"2018-12-28T00:00:00Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://nito95.github.io/posts/2018-12-28/"},"publisher":{"@type":"Organization","name":"nito95 blog","logo":{"@type":"ImageObject","url":"https://nito95.github.io/%3Clink%20/%20abs%20url%3E"}}}</script>
+<script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"OR-Tools で解く Vehicle Routing Problem","name":"OR-Tools で解く Vehicle Routing Problem","description":"現在、自分は SmartDrive Fleet という SaaS プロダクトを担当しています。 デバイスを従業員の車両に取り付けることで、車両管理や運転日報、安全運転診断やジオフェンシングといった機能をWebやアプリで提供しています。\nユーザーの業種は幅広いのですが、その中でも通所介護や通所リハビリテーション (以後 デイケア) を行っている事業所が一定の割合を占めています。 デイケアでは朝夕に利用者を送迎する必要があり、同じ時間帯に同時に3~4台、規模によっては10~20台前後の車を使うことがあります。\n各利用者は家にピックアップする時間がそれぞれ決まっており、事業所に来る、つまりサービスを受け始める時間も決まっているのでなかなかシビアな朝の迎えをしています。 事業所の人は円滑に送迎が行われているのか管理をする必要があり、助手席に座るもう一人のスタッフが電話をして逐一報告を管理者にしている形態をとっていました。 それを SmartDrive Fleet を使うことで助手席の人はいらなくなり、リアルタイムでどこにいるのか管理ができるという使われ方をしています。\nユーザーヒアリングを行ったときに、いくつかのデイケアの事業所の方から 「利用者に休みが出たり、体験入所で新たに送迎する利用者が出たりするときにルートを計画するのがとても大変。土地勘のある人が非常に時間をかけて計画表を作る必要がある。」という話を受けました。\nこれを解決するためのツールはないかなと探していると Google OR-Tools というライブラリを発見したのでこれを試しに使ってみました。 OR-Tools は Google 製の最適化ツールです。線型計画法、貢献度分配問題、ナップサック問題、巡回セールスマン問題など様々な最適化問題を扱えます。 OR-ToolsはOSSで無料で使えて、言語は Python, C++, C#, Java に対応しています。今回はC++で試してみます。\n今回やりたい送迎ルート作成問題は Vehicle Routing Problem (以下 VRP) であり、VRP は OR-Tools で解くことができます。 VRP は NP-hard (NP困難) に分類される問題で、計算完了までのかかる時間が指数関数的に増えるとされています。 OR-ToolsではVRPを数理的に解いていますが、他にディープラーニングの応用や量子コンピュータといったアプローチも取られているようで、ググると論文がヒットします。\nVRP はどんなものか、OR-Tools の Guide に載ってる図を拝借して書きます。 (https://developers.google.com/optimization/routing/vrp)\n  真ん中の黒ノードが事業所、青ノードがピックアップする利用者宅とし、4台の車両を使います。ノード内の数字は ID です。\nVRP を解くのに必要なのは、あるノードからあるノードへの距離情報です。17ノードあるので 17 * 17 のマトリックスで距離を表します。 ちなみに OR-Tools を実際にプロダクトに使う場合は、各利用者の地点座標からこのマトリックスを作る必要があります。 ありがたいことに Google Map には Distance Matrix API があり、住所を配列で送ることで各住所間の距離をマトリックスで返してくれます。ただし16個までしか配列を送れません。もし32個の地点の distance matrix を得たい場合には API を4回 call する必要があります。","keywords":["VRP"],"articleBody":"現在、自分は SmartDrive Fleet という SaaS プロダクトを担当しています。 デバイスを従業員の車両に取り付けることで、車両管理や運転日報、安全運転診断やジオフェンシングといった機能をWebやアプリで提供しています。\nユーザーの業種は幅広いのですが、その中でも通所介護や通所リハビリテーション (以後 デイケア) を行っている事業所が一定の割合を占めています。 デイケアでは朝夕に利用者を送迎する必要があり、同じ時間帯に同時に3~4台、規模によっては10~20台前後の車を使うことがあります。\n各利用者は家にピックアップする時間がそれぞれ決まっており、事業所に来る、つまりサービスを受け始める時間も決まっているのでなかなかシビアな朝の迎えをしています。 事業所の人は円滑に送迎が行われているのか管理をする必要があり、助手席に座るもう一人のスタッフが電話をして逐一報告を管理者にしている形態をとっていました。 それを SmartDrive Fleet を使うことで助手席の人はいらなくなり、リアルタイムでどこにいるのか管理ができるという使われ方をしています。\nユーザーヒアリングを行ったときに、いくつかのデイケアの事業所の方から 「利用者に休みが出たり、体験入所で新たに送迎する利用者が出たりするときにルートを計画するのがとても大変。土地勘のある人が非常に時間をかけて計画表を作る必要がある。」という話を受けました。\nこれを解決するためのツールはないかなと探していると Google OR-Tools というライブラリを発見したのでこれを試しに使ってみました。 OR-Tools は Google 製の最適化ツールです。線型計画法、貢献度分配問題、ナップサック問題、巡回セールスマン問題など様々な最適化問題を扱えます。 OR-ToolsはOSSで無料で使えて、言語は Python, C++, C#, Java に対応しています。今回はC++で試してみます。\n今回やりたい送迎ルート作成問題は Vehicle Routing Problem (以下 VRP) であり、VRP は OR-Tools で解くことができます。 VRP は NP-hard (NP困難) に分類される問題で、計算完了までのかかる時間が指数関数的に増えるとされています。 OR-ToolsではVRPを数理的に解いていますが、他にディープラーニングの応用や量子コンピュータといったアプローチも取られているようで、ググると論文がヒットします。\nVRP はどんなものか、OR-Tools の Guide に載ってる図を拝借して書きます。 (https://developers.google.com/optimization/routing/vrp)\n  真ん中の黒ノードが事業所、青ノードがピックアップする利用者宅とし、4台の車両を使います。ノード内の数字は ID です。\nVRP を解くのに必要なのは、あるノードからあるノードへの距離情報です。17ノードあるので 17 * 17 のマトリックスで距離を表します。 ちなみに OR-Tools を実際にプロダクトに使う場合は、各利用者の地点座標からこのマトリックスを作る必要があります。 ありがたいことに Google Map には Distance Matrix API があり、住所を配列で送ることで各住所間の距離をマトリックスで返してくれます。ただし16個までしか配列を送れません。もし32個の地点の distance matrix を得たい場合には API を4回 call する必要があります。\ndistance matrix がわかったら DataModel を作成します。\nstruct DataModel { const std::vectorstd::vectorint64_t distance_matrix{ {0, 548, 776, 696, 582, 274, 502, 194, 308, 194, 536, 502, 388, 354, 468, 776, 662}, {548, 0, 684, 308, 194, 502, 730, 354, 696, 742, 1084, 594, 480, 674, 1016, 868, 1210}, {776, 684, 0, 992, 878, 502, 274, 810, 468, 742, 400, 1278, 1164, 1130, 788, 1552, 754}, {696, 308, 992, 0, 114, 650, 878, 502, 844, 890, 1232, 514, 628, 822, 1164, 560, 1358}, {582, 194, 878, 114, 0, 536, 764, 388, 730, 776, 1118, 400, 514, 708, 1050, 674, 1244}, {274, 502, 502, 650, 536, 0, 228, 308, 194, 240, 582, 776, 662, 628, 514, 1050, 708}, {502, 730, 274, 878, 764, 228, 0, 536, 194, 468, 354, 1004, 890, 856, 514, 1278, 480}, {194, 354, 810, 502, 388, 308, 536, 0, 342, 388, 730, 468, 354, 320, 662, 742, 856}, {308, 696, 468, 844, 730, 194, 194, 342, 0, 274, 388, 810, 696, 662, 320, 1084, 514}, {194, 742, 742, 890, 776, 240, 468, 388, 274, 0, 342, 536, 422, 388, 274, 810, 468}, {536, 1084, 400, 1232, 1118, 582, 354, 730, 388, 342, 0, 878, 764, 730, 388, 1152, 354}, {502, 594, 1278, 514, 400, 776, 1004, 468, 810, 536, 878, 0, 114, 308, 650, 274, 844}, {388, 480, 1164, 628, 514, 662, 890, 354, 696, 422, 764, 114, 0, 194, 536, 388, 730}, {354, 674, 1130, 822, 708, 628, 856, 320, 662, 388, 730, 308, 194, 0, 342, 422, 536}, {468, 1016, 788, 1164, 1050, 514, 514, 662, 320, 274, 388, 650, 536, 342, 0, 764, 194}, {776, 868, 1552, 560, 674, 1050, 1278, 742, 1084, 810, 1152, 274, 388, 422, 764, 0, 798}, {662, 1210, 754, 1358, 1244, 708, 480, 856, 514, 468, 354, 844, 730, 536, 194, 798, 0}, }; const int num_vehicles = 4; const RoutingIndexManager::NodeIndex depot{0}; }; この DataModel を使って RoutingIndexManager を作り、それを用いて RoutingModel を作成します。\nRoutingIndexManager manager(data.distance_matrix.size(), data.num_vehicles, data.depot); RoutingModel routing(manager); また計算結果の走行距離を取得し、それに対して重みをつけたいので RegisterTransitCallback() で callback を作成します。\nconst int transit_callback_index = routing.RegisterTransitCallback( [\u0026data, \u0026manager](int64_t from_index, int64_t to_index) - int64_t { // Convert from routing variable Index to distance matrix NodeIndex.  auto from_node = manager.IndexToNode(from_index).value(); auto to_node = manager.IndexToNode(to_index).value(); return data.distance_matrix[from_node][to_node]; }); routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index); 次にパラメータ調整をします。\nSetGlobalSpanCostCoefficient() では各車両のルートの中で最も所要時間の長いルートをできるだけ小さくしようとする際に用いられる重み、コストです。 0 の場合は考慮がされないので、アルゴリズムは全車両合計の総走行時間が短くなるのであれば、ごく少数の車両に多くの利用者を割り当てて非常に長いルートを作成する一方、残りの車両にはゼロかごく少数の利用者だけを割り当てるような偏りの大きなルートができます。 デイケア事業においては持っているリソース (車両および人員) をできるだけフル活用し、送迎にかかる時間を短くしたい、かつあまり偏りが出ないようにしたいというケースが多いので、この値を調整する必要があります。\nちなみに各ノードごとにも重みをつけることができ、そのノードを通らなかった場合にペナルティとしてコストをプラスさせることができますPenalties and Dropping Visits。 GlobalSpanCost の値はペナルティと合わせて調整しないと、ノードを全く通らずペナルティを受け入れるルート結果が出たりします。\nrouting.AddDimension(transit_callback_index, 0, 3000, true, \"Distance\"); routing.GetMutableDimension(\"Distance\")-SetGlobalSpanCostCoefficient(100); 最後に SolveWithParameters() で結果が出力されます。結果を図示したもの↓\n  しかしこれでは各利用者をピックアップすべき時間が設定できていません。OR-Tools では Time Window 制約にも対応しており、10時から送迎がスタートしてAさんの家には10:10~10:15、Bさんの家には10:30~10:45に行く、といった問題設定も可能です。なので時間制約の問題はクリアできます。 Vehicle Routing Problem with Time Windows\n  あとは乗客人数制約です。デイケアの送迎に使われる車両はワゴン車が多く、せいぜい5~6人の利用者しか乗せられないので、1つの車両が1度施設に帰ってきて利用者をおろし、再び別の人のピックアップにいくといったことがあります。 ありがたいことにこれも OR-Tools で解決できます Capacity Constraints。ただし利用者には特性があり、車椅子の方は専用の車両しか使えない、その車両には車椅子ではない方も何人か乗せられるといったケースもよくあるので、ここは工夫しないと実現できないです。\n  というわけでなんとか OR-Tools を使ってデイケアの送迎のルート計画はできるかも、という兆しが見えました。\n注意点としてはメタヒューリスティクスを用いているので最適性の保証はないです。つまり必ずしも全体最適解が求まるとは限りません。 条件によっては結果が悪くなるケース、複雑すぎて結果が出ないケースも出てくるので、その際にはパラメータで探索戦略を変えて試す必要があると思います。探索戦略には焼きなまし法、タブー探索法、貪欲法などあります。一部しか知らないので勉強してみる所存。(https://developers.google.com/optimization/routing/routing_options)\n","wordCount":"491","inLanguage":"en","datePublished":"2018-12-28T00:00:00Z","dateModified":"2018-12-28T00:00:00Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://nito95.github.io/posts/2018-12-28/"},"publisher":{"@type":"Organization","name":"nito95 blog","logo":{"@type":"ImageObject","url":"https://nito95.github.io/%3Clink%20/%20abs%20url%3E"}}}</script>
 </head>
 <body id=top>
 <script>localStorage.getItem("pref-theme")==="dark"&&document.body.classList.add('dark')</script>
@@ -96,26 +90,26 @@ OR-Tools で解く Vehicle Routing Problem
 </header>
 <div class=post-content><p>現在、自分は SmartDrive Fleet という SaaS プロダクトを担当しています。
 デバイスを従業員の車両に取り付けることで、車両管理や運転日報、安全運転診断やジオフェンシングといった機能をWebやアプリで提供しています。</p>
-<p>ユーザーの業種は幅広いのですが、その中でも介護・福祉業界のユーザーが一定の割合を占めています。
-例えばデイケアの事業所では朝夕に利用者を送迎する必要があり、同じ時間帯に同時に3~4台、規模によっては10~20台前後の車を使うことがあります。</p>
+<p>ユーザーの業種は幅広いのですが、その中でも通所介護や通所リハビリテーション (以後 デイケア) を行っている事業所が一定の割合を占めています。
+デイケアでは朝夕に利用者を送迎する必要があり、同じ時間帯に同時に3~4台、規模によっては10~20台前後の車を使うことがあります。</p>
 <p>各利用者は家にピックアップする時間がそれぞれ決まっており、事業所に来る、つまりサービスを受け始める時間も決まっているのでなかなかシビアな朝の迎えをしています。
 事業所の人は円滑に送迎が行われているのか管理をする必要があり、助手席に座るもう一人のスタッフが電話をして逐一報告を管理者にしている形態をとっていました。
 それを SmartDrive Fleet を使うことで助手席の人はいらなくなり、リアルタイムでどこにいるのか管理ができるという使われ方をしています。</p>
-<p>SmartDrive Fleet を使っているいくつかのデイケアの事業所の方から 「利用者に休みが出たり、体験入所で新たに送迎する利用者が出たりするときにルートを計画するのがとても大変。土地勘のある人が非常に時間をかけて計画表を作る必要がある。」という話を受けました。</p>
-<p>これを解決するためのツールはないかなと探していると <a href=https://developers.google.com/optimization>Google OR-Tools</a> というライブラリを発見したのでこれを試しに使ってみました。</p>
-<p>OR-Tools は Google 製の最適化ツールです。線型計画法、貢献度分配問題、ナップサック問題、巡回セールスマン問題など様々な最適化問題を扱えます。
+<p>ユーザーヒアリングを行ったときに、いくつかのデイケアの事業所の方から 「利用者に休みが出たり、体験入所で新たに送迎する利用者が出たりするときにルートを計画するのがとても大変。土地勘のある人が非常に時間をかけて計画表を作る必要がある。」という話を受けました。</p>
+<p>これを解決するためのツールはないかなと探していると <a href=https://developers.google.com/optimization>Google OR-Tools</a> というライブラリを発見したのでこれを試しに使ってみました。
+OR-Tools は Google 製の最適化ツールです。線型計画法、貢献度分配問題、ナップサック問題、巡回セールスマン問題など様々な最適化問題を扱えます。
 OR-ToolsはOSSで無料で使えて、言語は Python, C++, C#, Java に対応しています。今回はC++で試してみます。</p>
 <p>今回やりたい送迎ルート作成問題は Vehicle Routing Problem (以下 VRP) であり、VRP は OR-Tools で解くことができます。
 VRP は <a href=https://ja.wikipedia.org/wiki/NP%E5%9B%B0%E9%9B%A3>NP-hard (NP困難)</a> に分類される問題で、計算完了までのかかる時間が指数関数的に増えるとされています。
-OR-ToolsではVRPを数理的に解いていますが、他にディープラーニングの応用や量子コンピュータといったアプローチも取られているみたいです。</p>
-<p>VRP はどんなものか、OR-Tools の Guide に載ってる例と図を拝借して書きます。 (<a href=https://developers.google.com/optimization/routing/vrp>https://developers.google.com/optimization/routing/vrp</a>)</p>
+OR-ToolsではVRPを数理的に解いていますが、他にディープラーニングの応用や量子コンピュータといったアプローチも取られているようで、ググると論文がヒットします。</p>
+<p>VRP はどんなものか、OR-Tools の Guide に載ってる図を拝借して書きます。 (<a href=https://developers.google.com/optimization/routing/vrp>https://developers.google.com/optimization/routing/vrp</a>)</p>
 <figure>
-<img loading=lazy src=/images/2018-12-28-1.svg width=600>
+<img loading=lazy src=/images/2018-12-28-1.svg>
 </figure>
-<p>真ん中の黒ノードが事業所、青ノードがピックアップする利用者宅とし、4台の車を使い、各車は最大で4人まで利用者を載せられることとします。ノード内の数字は ID です。</p>
-<p>VRP を解くのに必要なのは、あるノードからあるノードへの距離情報です。17ノードあるので 17 * 17 のマトリックスで距離を表します。</p>
-<p>ちなみに OR-Tools を実際にプロダクトに使う場合は、各利用者の地点座標からこのマトリックスを作る必要があります。
-ありがたいことに Google Map には <a href=https://developers.google.com/optimization/routing/vrp#distance_matrix_api>Distance Matrix API</a> があり、住所を配列で送ることで各住所間の距離をマトリックスで返してくれます。しかしこのAPIは上限があり、16個までしか配列を送れません。</p>
+<p>真ん中の黒ノードが事業所、青ノードがピックアップする利用者宅とし、4台の車両を使います。ノード内の数字は ID です。</p>
+<p>VRP を解くのに必要なのは、あるノードからあるノードへの距離情報です。17ノードあるので 17 * 17 のマトリックスで距離を表します。
+ちなみに OR-Tools を実際にプロダクトに使う場合は、各利用者の地点座標からこのマトリックスを作る必要があります。
+ありがたいことに Google Map には <a href=https://developers.google.com/optimization/routing/vrp#distance_matrix_api>Distance Matrix API</a> があり、住所を配列で送ることで各住所間の距離をマトリックスで返してくれます。ただし16個までしか配列を送れません。もし32個の地点の distance matrix を得たい場合には API を4回 call する必要があります。</p>
 <p>distance matrix がわかったら <code>DataModel</code> を作成します。</p>
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=color:#66d9ef>struct</span> <span style=color:#a6e22e>DataModel</span> {
     <span style=color:#66d9ef>const</span> std<span style=color:#f92672>::</span>vector<span style=color:#f92672>&lt;</span>std<span style=color:#f92672>::</span>vector<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>int64_t</span><span style=color:#f92672>&gt;&gt;</span> distance_matrix{
@@ -161,28 +155,40 @@ OR-ToolsではVRPを数理的に解いていますが、他にディープラー
 <div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp>RoutingIndexManager <span style=color:#a6e22e>manager</span>(data.distance_matrix.size(), data.num_vehicles,
                             data.depot);
 RoutingModel <span style=color:#a6e22e>routing</span>(manager);
-</code></pre></div><p>また、計算後の距離の callback を取得したいので <code>RegisterTransitCallback()</code> で callback を作成します。</p>
-<pre><code>const int transit_callback_index = routing.RegisterTransitCallback(
-    [&amp;data, &amp;manager](int64_t from_index, int64_t to_index) -&gt; int64_t {
-      // Convert from routing variable Index to distance matrix NodeIndex.
-      auto from_node = manager.IndexToNode(from_index).value();
-      auto to_node = manager.IndexToNode(to_index).value();
-      return data.distance_matrix[from_node][to_node];
+</code></pre></div><p>また計算結果の走行距離を取得し、それに対して重みをつけたいので <code>RegisterTransitCallback()</code> で callback を作成します。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp><span style=color:#66d9ef>const</span> <span style=color:#66d9ef>int</span> transit_callback_index <span style=color:#f92672>=</span> routing.RegisterTransitCallback(
+    [<span style=color:#f92672>&amp;</span>data, <span style=color:#f92672>&amp;</span>manager](<span style=color:#66d9ef>int64_t</span> from_index, <span style=color:#66d9ef>int64_t</span> to_index) <span style=color:#f92672>-&gt;</span> <span style=color:#66d9ef>int64_t</span> {
+      <span style=color:#75715e>// Convert from routing variable Index to distance matrix NodeIndex.
+</span><span style=color:#75715e></span>      <span style=color:#66d9ef>auto</span> from_node <span style=color:#f92672>=</span> manager.IndexToNode(from_index).value();
+      <span style=color:#66d9ef>auto</span> to_node <span style=color:#f92672>=</span> manager.IndexToNode(to_index).value();
+      <span style=color:#66d9ef>return</span> data.distance_matrix[from_node][to_node];
     });
 routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index);
-</code></pre><p>次にパラメータ調整をします。</p>
+</code></pre></div><p>次にパラメータ調整をします。</p>
 <p><code>SetGlobalSpanCostCoefficient()</code> では各車両のルートの中で最も所要時間の長いルートをできるだけ小さくしようとする際に用いられる重み、コストです。
 <code>0</code> の場合は考慮がされないので、アルゴリズムは全車両合計の総走行時間が短くなるのであれば、ごく少数の車両に多くの利用者を割り当てて非常に長いルートを作成する一方、残りの車両にはゼロかごく少数の利用者だけを割り当てるような偏りの大きなルートができます。
-デイケア事業においては持っているリソース (車両および人員) をできるだけフル活用し、あまり偏りが出ないようにしたいというケースが多いので、この値は調整する必要があります。</p>
-<pre><code>routing.AddDimension(transit_callback_index, 0, 3000, true, &quot;Distance&quot;);
-routing.GetMutableDimension(&quot;Distance&quot;)-&gt;SetGlobalSpanCostCoefficient(100);
-</code></pre><p>最後に <code>SolveWithParameters()</code> で結果が出力されます。結果を図示したもの↓</p>
+デイケア事業においては持っているリソース (車両および人員) をできるだけフル活用し、送迎にかかる時間を短くしたい、かつあまり偏りが出ないようにしたいというケースが多いので、この値を調整する必要があります。</p>
+<p>ちなみに各ノードごとにも重みをつけることができ、そのノードを通らなかった場合にペナルティとしてコストをプラスさせることができます<a href=https://developers.google.com/optimization/routing/penalties>Penalties and Dropping Visits</a>。
+GlobalSpanCost の値はペナルティと合わせて調整しないと、ノードを全く通らずペナルティを受け入れるルート結果が出たりします。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-cpp data-lang=cpp>routing.AddDimension(transit_callback_index, <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>3000</span>, true, <span style=color:#e6db74>&#34;Distance&#34;</span>);
+routing.GetMutableDimension(<span style=color:#e6db74>&#34;Distance&#34;</span>)<span style=color:#f92672>-&gt;</span>SetGlobalSpanCostCoefficient(<span style=color:#ae81ff>100</span>);
+</code></pre></div><p>最後に <code>SolveWithParameters()</code> で結果が出力されます。結果を図示したもの↓</p>
 <figure>
-<img loading=lazy src=/images/2018-12-28-2.svg width=600>
+<img loading=lazy src=/images/2018-12-28-2.svg>
 </figure>
+<p>しかしこれでは各利用者をピックアップすべき時間が設定できていません。OR-Tools では Time Window 制約にも対応しており、10時から送迎がスタートしてAさんの家には10:10~10:15、Bさんの家には10:30~10:45に行く、といった問題設定も可能です。なので時間制約の問題はクリアできます。
+<a href=https://developers.google.com/optimization/routing/vrptw>Vehicle Routing Problem with Time Windows</a></p>
+<figure>
+<img loading=lazy src=/images/2018-12-28-3.svg>
+</figure>
+<p>あとは乗客人数制約です。デイケアの送迎に使われる車両はワゴン車が多く、せいぜい5~6人の利用者しか乗せられないので、1つの車両が1度施設に帰ってきて利用者をおろし、再び別の人のピックアップにいくといったことがあります。
+ありがたいことにこれも OR-Tools で解決できます <a href=https://developers.google.com/optimization/routing/cvrp>Capacity Constraints</a>。ただし利用者には特性があり、車椅子の方は専用の車両しか使えない、その車両には車椅子ではない方も何人か乗せられるといったケースもよくあるので、ここは工夫しないと実現できないです。</p>
+<figure>
+<img loading=lazy src=/images/2018-12-28-4.svg>
+</figure>
+<p>というわけでなんとか OR-Tools を使ってデイケアの送迎のルート計画はできるかも、という兆しが見えました。</p>
 <p>注意点としてはメタヒューリスティクスを用いているので最適性の保証はないです。つまり必ずしも全体最適解が求まるとは限りません。
 条件によっては結果が悪くなるケース、複雑すぎて結果が出ないケースも出てくるので、その際にはパラメータで探索戦略を変えて試す必要があると思います。探索戦略には焼きなまし法、タブー探索法、貪欲法などあります。一部しか知らないので勉強してみる所存。(<a href=https://developers.google.com/optimization/routing/routing_options>https://developers.google.com/optimization/routing/routing_options</a>)</p>
-<p>非常に面白いツールなので色々触って遊んでみようと思います。</p>
 </div>
 <footer class=post-footer>
 <ul class=post-tags>
