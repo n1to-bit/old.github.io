@@ -26,7 +26,8 @@ summary: "archives"
 - 2020-09 - 現在 フリーランスエンジニア
     - NFTマーケットプレイスサービス開発
     - 請求・決済系SaaS開発
-    - C向けSNSアプリ開発
+    - C向けSNSアプリ開発運用
+      - 1日あたりのAPIリクエスト数 180~220万
 
 #### Skills
 Programming
