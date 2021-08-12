@@ -57,8 +57,6 @@ params:
           url: "https://github.com/nito95/"
         - name: linkedin
           url: "https://www.linkedin.com/in/naoya-ito-68728a116/"
-        - name: email
-          url: "mailto:nao7120ya@gmail.com"
 
     analytics:
         google:

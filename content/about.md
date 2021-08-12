@@ -11,10 +11,6 @@ summary: "archives"
 前職ではSaaSの開発保守を約3年間していました。技術領域はRuby on RailsやGoでのAPI開発, AWSのインフラ構築, 運用をメインでやっています。
 必要に応じてフロント開発やFlutterでのアプリ開発もしてますが、バックエンドの方が経験は長いです。
 
-#### Education
-- 2007-04 - 2013-03 名古屋大学教育学部附属中高
-- 2013-04 - 2017-03 中央大学商学部会計学科
-
 #### Career
 - 2016-07 - 2017-03 サイバー・バズ(サイバーエージェント子会社)エンジニアアルバイト
     - 社内ツール開発
@@ -57,7 +53,6 @@ Cloud
 - [Github](https://github.com/nito95/)
 - [LinkedIn](https://www.linkedin.com/in/naoya-ito-68728a116/)
 - [Wantedly](https://www.wantedly.com/id/itosys)
-- mail: nao7120ya@gmail.com
 
 #### Hobby
 
