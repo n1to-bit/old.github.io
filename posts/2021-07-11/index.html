@@ -34,7 +34,7 @@ Write-Ahead Log(WAL)とRedo Logとは WALは日本語にするとログ先行書
 <link rel=mask-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
 <meta name=theme-color content="#2e2e33">
 <meta name=msapplication-TileColor content="#2e2e33">
-<meta name=generator content="Hugo 0.87.0">
+<meta name=generator content="Hugo 0.88.1">
 <link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.css integrity=sha384-Um5gpz1odJg5Z4HAmzPtgZKdTBHZdw8S29IecapCSB31ligYPhHQZMIlWLYQGVoc crossorigin=anonymous>
 <script defer src=https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.js integrity=sha384-YNHdsYkH6gMx9y3mRkmcJ2mFUjTd0qNQQvY9VYZgQd7DcN7env35GzlmFaZ23JGp crossorigin=anonymous></script>
 <script defer src=https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/contrib/auto-render.min.js integrity=sha384-vZTG03m+2yp6N6BNi5iM4rW4oIwk5DfcNdFfxkk9ZWpDriOkXX8voJBFrAO7MpVl crossorigin=anonymous onload=renderMathInElement(document.body)></script>
@@ -115,36 +115,36 @@ Amazon Aurora
 <div class=post-content><p>最近お手伝いしているベンチャーでRDS PostgreSQLをAuroraに移行しました。本番環境がスタンバイレプリカがない状態でRDSインスタンス1台で動いており、可用性を高めた方がいいのでどうせならAuroraに移行しちゃいましょう、と提案しエイヤと移行しました。</p>
 <p>その話を友人にしたら、「Auroraって何がすごいん?」と質問されました。前職でも当然のようにAuroraを使っており、Auroraは可用性が高くwriteヘビーなサービスにも強くて少しコストが高い、というザックリしたイメージしかなかったので、フワっとした返答しかできませんでした。</p>
 <p>ちゃんと調べてみようと思い、論文 <a href=https://www.allthingsdistributed.com/files/p1041-verbitski.pdf>Amazon Aurora: Design Considerations for High Throughput Cloud-Native Relational Databases</a> を読んで後日改めて友人に説明したので、そのノリでここにもまとめてみます。</p>
-<h3 id=耐障害性とquorum>耐障害性とQuorum<a hidden class=anchor aria-hidden=true href=#耐障害性とquorum>#</a></h3>
+<h2 id=耐障害性とquorum>耐障害性とQuorum<a hidden class=anchor aria-hidden=true href=#耐障害性とquorum>#</a></h2>
 <p>ストレージは1つで稼働させていると、何かの障害でそのストレージが止まってしまうとサービス全体が止まってしまうことになります。それを回避するために同じシステム環境を2つ用意し、1つは稼働し1つは待機させ、障害が発生した際には待機させていたストレージに稼働を切り替えるだけでサービスが再開するようにして可用性を高めます。いわゆるレプリケーションです。</p>
 <p>この2つは常に同じデータを保持していなければなりません。なのでデータを書き込む際には両方に対して書き込みをするわけですが、片方のストレージで障害が起きたりネットワークの不通で書き込みに失敗した場合には2つのデータの整合性を保ちたいのでリトライが行われます。</p>
 <p>しかしパフォーマンス面からするとリトライ処理は悪なので、1つくらいストレージが不調でレスポンスが返ってこなくても気にせず進めたい。データの整合性は保ちつつパフォーマンスも下げたくないとなると、解決策としては3つストレージを配置することとなります。
 書き込みで3つ並列にリクエストが行い、1つ不調だったとしても2つからレスポンスが返ってこれば不整合なく書き込みが成功したとし、読み込みは3つにリクエストを行い2つから同じレスポンスが返ればそれは最新のデータだとします。多数決が行われるわけです。1つ遅いストレージ(straggler)がいても残り2つが正常なら素早い合意が取れるのでパフォーマンスの面でもメリットがあります。</p>
 <p>分散システムにおいて処理の整合性をとるために多数決でもって合意を行うことを<a href=https://en.wikipedia.org/wiki/Quorum_(distributed_computing)>Quorum（クオラム）</a>モデルと言います。</p>
 <p>しかしここで終わりません。3つに分散させて2/3 Quorumで合意する仕組みでは不十分だとしました。</p>
-<h3 id=auroraは6台構成>Auroraは6台構成<a hidden class=anchor aria-hidden=true href=#auroraは6台構成>#</a></h3>
+<h2 id=auroraは6台構成>Auroraは6台構成<a hidden class=anchor aria-hidden=true href=#auroraは6台構成>#</a></h2>
 <p>AWSの各リージョンには必ず3つ以上のAZ(アベイラビリティーゾーン)があります。AZ同士は物理的に距離が離れており、使われている電源系統も違えばソフトウェアのデプロイ周期も違います。
 AWSの障害はAZ単位で起こることが多いので、サーバーを2つ作る場合は1つはAZ-aに置いて、もう1つはAZ-bに置けばAZ-aで障害が起きてもサービスは止まらずに済みます。</p>
 <p>先ほど書いた2/3 Quorumでデータベースを構築するならば、AZ-aとAZ-bとAZ-cにそれぞれストレージを1つずつ置きます。ここでもしAZ-aで大規模な火災が起きたらどうなるでしょうか。復旧は数日ではできないので、しばらくAZ-bとAZ-cだけで稼働することになります。ここでさらにAZ-bに置いたストレージ1つに一時的な障害が起きてしまうと、稼働できるのがAZ-cだけとなり、読み込みも書き込みも2/3を満たせず合意が取れなくなります。</p>
 <p>このAZ+1障害(AZレベルの障害が起き、さらにストレージ1つに障害が起きる)に対応するためにAuroraでは6台構成とし、4/6の書き込みQuorumと3/6の読み込みQuorumとしました。
 各AZに2台ずつ置くことでAZ障害が起きても4つのストレージで読み書きでき、さらに1つ不調となっても3つのストレージで読み込みだけはできるようになります。</p>
-<h4 id=なぜ書き込みが46で読み込みが36なのか>なぜ書き込みが4/6で読み込みが3/6なのか　<a hidden class=anchor aria-hidden=true href=#なぜ書き込みが46で読み込みが36なのか>#</a></h4>
+<h3 id=なぜ書き込みが46で読み込みが36なのか>なぜ書き込みが4/6で読み込みが3/6なのか　<a hidden class=anchor aria-hidden=true href=#なぜ書き込みが46で読み込みが36なのか>#</a></h3>
 <p>全体の投票数(ストレージ数)を \(V\)とし、読み込みQuorumの投票数を\(V_{r}\) 書き込みQuorumの投票数を\(V_{w}\)とします。</p>
 <p>書き込みでは最新のデータを競合を回避して書き込めることが求められるので、過半数である\(V_{w} > V/2\)を満たす必要があります。もし半分だったらどっちが正解かわからなくなります。一方、読み込みは最新の書き込まれたデータを読むことが求められるので \(V_{r} + V_{w} > V\)を満たす必要があります。書き込みでは過半数を超えたら成功するので、このルールにすることで読み込みQuorumの中には少なくとも1つは最新のデータが必ず含まれることになります。</p>
 <p>元々 <code>hoge</code> というデータが6つのストレージそれぞれに入っている状態で、 <code>fuga</code> に書き換えるとします。6つのうち4つは書き込みが成功した一方で2つは書き込みが失敗しました。結果的には過半数を超えるので書き込み成功です。すると次に読み込みを行うと4つからは <code>fuga</code> 2つからは <code>hoge</code> が返ってきます。最新データの取得を保証する意味においては3つから <code>fuga</code> が返ってこれば問題ないわけです。3つから <code>hoge</code> 3つから <code>fuga</code> が返ってくることは書き込みが成功している時点であり得ません。</p>
 <figure>
 <img loading=lazy src=/images/2021-07-07-1.png width=360>
 </figure>
-<h3 id=分散させることで生じるnetwork-ioの問題と解決策>分散させることで生じるNetwork I/Oの問題と解決策<a hidden class=anchor aria-hidden=true href=#分散させることで生じるnetwork-ioの問題と解決策>#</a></h3>
+<h2 id=分散させることで生じるnetwork-ioの問題と解決策>分散させることで生じるNetwork I/Oの問題と解決策<a hidden class=anchor aria-hidden=true href=#分散させることで生じるnetwork-ioの問題と解決策>#</a></h2>
 <p>ストレージを複数に分散させる場合、問題になるのはNetworkです。従来のレプリケーションされたMySQLでは、書き込みのためにredo log、binlog、doublewrite用のデータページ、メタデータ(FRM)を送る必要があるため、6台構成ではとんでもない量のトラフィックとなってしまいます。
 そのためAuroraでは、書き込みの際にネットワークを超えて送られるデータはredo logのみとし、ストレージ層にlog applicatorを置き各ストレージが自立的にredo logを再生することで最新状態までデータリカバリーできるようにしています。</p>
-<h4 id=write-ahead-logwalとredo-logとは>Write-Ahead Log(WAL)とRedo Logとは<a hidden class=anchor aria-hidden=true href=#write-ahead-logwalとredo-logとは>#</a></h4>
+<h3 id=write-ahead-logwalとredo-logとは>Write-Ahead Log(WAL)とRedo Logとは<a hidden class=anchor aria-hidden=true href=#write-ahead-logwalとredo-logとは>#</a></h3>
 <p>WALは日本語にするとログ先行書き込みで、データベースに対する処理を行う前に全てログに記録する手法をいいます。例えばUPDATEをかけた場合、データをディスクから読み出してメモリ上で値を変えてディスクにフラッシュする必要があります。これが大量のレコードだった場合はデータをある程度の大きさのチャンクに分けてその塊ごとにUPDATEをかけていきます。
 もしその途中で電源が落ちた場合、一部だけ書き換わっていて残りは古いままとなる不整合が発生します。それを防ぐために、書き込みをする前にどのページをどう書き換えるか操作情報を全てログに書きます。電源が落ちて再び電源を入れる際にクラッシュリカバリが走り、ログをチェックし、本来行うべき内容と実際に行われた内容を比較して処理を開始時までundoするか、redoして再開させるか判断することができます。ファイルシステムでいう<a href=https://ja.wikipedia.org/wiki/%E3%82%B8%E3%83%A3%E3%83%BC%E3%83%8A%E3%83%AA%E3%83%B3%E3%82%B0%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0>ジャーナリング</a>と似てます。</p>
 <p>redoに使うためのログがredo logです。ちなみにGitのコミットログも、どう変更されたかの差分情報だけなのでredo logです。
 Auroraではストレージが新たに追加された場合や再起動された場合にログを取得し再生します。これによって従来あったクラッシュリカバリの諸々の処理を不要にできます。</p>
 <p>ちなみにredo logを取りこぼしてしまってもPrimaryに聞きに行くことはせず、他のストレージとGossip通信を行って同期させます。</p>
-<h3 id=まとめ>まとめ<a hidden class=anchor aria-hidden=true href=#まとめ>#</a></h3>
+<h2 id=まとめ>まとめ<a hidden class=anchor aria-hidden=true href=#まとめ>#</a></h2>
 <p>Auroraの興味深い点は、6台構成にして3/6読み込みQuorumと4/6書き込みQuorumで合意形成をしている点、Primaryはredo logを投げ続けるだけで各ストレージたちが自立的にログを再生してデータを最新にできる点でした。
 この論文を読んでMySQLとPostgreSQLの既存の仕組みを調べることにもなったので、知識が深まるいいきっかけとなりました。</p>
 <p>書籍 <a href=https://www.amazon.co.jp/dp/4873117127>Nand2Tetris(コンピュータシステムの理論と実装)</a> を読んで以来、腹落ちさせるには読むだけでなく簡単なものでいいので自作するのが良いと思っているので、簡単なデータベースを自作してみたいなという気持ちが沸いております。</p>

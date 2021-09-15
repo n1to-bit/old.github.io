@@ -22,7 +22,7 @@ sort(first, last, comp) first, last: Random-access iterators to the initial and 
 <link rel=mask-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
 <meta name=theme-color content="#2e2e33">
 <meta name=msapplication-TileColor content="#2e2e33">
-<meta name=generator content="Hugo 0.87.0">
+<meta name=generator content="Hugo 0.88.1">
 <meta property="og:title" content="C++の std::sort() で使われている Introsort">
 <meta property="og:description" content="書籍 「問題解決力を鍛える!アルゴリズムとデータ構造」 を読み切ったのですが、C++ STLの sort() には Introsort というアルゴリズムが使われていると載っているだけで、具体的にどのように実装されているのか詳細は書かれていませんでした。
 std::sort() の Syntaxは
@@ -92,7 +92,7 @@ comp:
 <li>Worse Case - O(N log N)</li>
 </ul>
 <p>で、安定ソート(同じ値の順序が維持されるソート)ではないです。</p>
-<h3 id=introsort-とは>Introsort とは<a hidden class=anchor aria-hidden=true href=#introsort-とは>#</a></h3>
+<h2 id=introsort-とは>Introsort とは<a hidden class=anchor aria-hidden=true href=#introsort-とは>#</a></h2>
 <p>std::sort() は Introsort というアルゴリズムが採用されています。</p>
 <p><a href=https://en.wikipedia.org/wiki/Introsort>Wikipedia</a> によると Introsort は Quicksort, Heapsort, Insertion Sort のハイブリッド型です。</p>
 <p>これら3つのソートアルゴリズムはC++で実装したことがあるので(<a href=https://github.com/nito95/cpp-data-structures-algorithms>nito95/cpp-data-structures-algorithms</a>) どのようにこれらを使っているのか <a href=https://en.wikipedia.org/wiki/Introsort>Wikipedia</a> を読んでみました。</p>
@@ -106,16 +106,16 @@ comp:
 <li>再帰の深さが 2*log(N) に達したら Heapsort でソート</li>
 <li>上記2つに該当しないなら Quicksort でソート</li>
 </ul>
-<h3 id=実装>実装<a hidden class=anchor aria-hidden=true href=#実装>#</a></h3>
+<h2 id=実装>実装<a hidden class=anchor aria-hidden=true href=#実装>#</a></h2>
 <p>GeeksforGeeksの <a href=https://www.geeksforgeeks.org/know-your-sorting-algorithm-set-2-introsort-cs-sorting-weapon/>Set 2 (Introsort- C++’s Sorting Weapon)</a> を参考にしつつ、 C++でIntrosortを実装してみました。</p>
 <p>書いたコードは <a href=https://github.com/nito95/cpp-data-structures-algorithms/blob/main/introsort.cpp>こちら</a></p>
-<h3 id=他言語のソートについて>他言語のソートについて<a hidden class=anchor aria-hidden=true href=#他言語のソートについて>#</a></h3>
+<h2 id=他言語のソートについて>他言語のソートについて<a hidden class=anchor aria-hidden=true href=#他言語のソートについて>#</a></h2>
 <p>C++ の std::sort() では Quicksort, Heapsort, Insertion Sort のハイブリッドである Introsort が使われている他、安定ソートを使いたい場合は Mergesort が使われる std::stable_sort() があります。</p>
 <p>Python では Timsort というアルゴリズムが使われており、これは Mergesort と Insertion Sort のハイブリッドです。これも調べて実装して記事にしようかなと思います。</p>
 <p>Java では Java7 前まではプリミティブの配列では Quicksort、オブジェクトの配列には Mergesort が使われていました。7以降では Timsort が使われているそうです。</p>
 <p>Swift では Swift5 以前は Introsort が使われており、以降は Timsort が使われています。Timsort に変更されたときの PR は <a href=https://github.com/apple/swift/pull/19717>こちら</a>。</p>
 <p>Ruby は軽く調べても何が採用されているかよくわからなかったので、Ruby本体のコードの中身を見てみました。 ソートの実装部分は <a href=https://github.com/ruby/ruby/blob/ruby_3_0/array.c#L3297>こちら (ruby/array.c)</a> で、コードを追っていくと、どうやら Linux のビルトインである <a href=https://linux.die.net/man/3/qsort>qsort(3)</a> が使われていそうでした。qsort は名前通り Quicksort が使われています。</p>
-<h3 id=参考>参考<a hidden class=anchor aria-hidden=true href=#参考>#</a></h3>
+<h2 id=参考>参考<a hidden class=anchor aria-hidden=true href=#参考>#</a></h2>
 <ul>
 <li><a href=https://en.wikipedia.org/wiki/Introsort>https://en.wikipedia.org/wiki/Introsort</a></li>
 <li><a href=https://www.geeksforgeeks.org/introsort-or-introspective-sort/>https://www.geeksforgeeks.org/introsort-or-introspective-sort/</a></li>

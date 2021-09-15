@@ -18,9 +18,8 @@
   これはRails &amp;amp; Vue.jsで作っており、ソースコードはGithubにあげています → nito95/metamask-login-rails-vue
 仕組み フロントがウォレットの秘密鍵を使って署名をすることでアカウントの所有権を証明します。バックエンドで署名済みデータ、ウォレットアドレス、nonce 使って検証できればそのウォレットアドレスはユーザー所有物だと認証でき、JWTを発行して以降の通信を行います。
 詳細の実装を説明していきます。
-まずはバックエンドで public_address と nonce を持った users テーブルを作成します。 public_address にはユーザーのウォレットアドレスを格納し、 nonce にはユーザー作成時&amp;amp;ログイン時に数字列をランダム生成した nonce 値を格納します。 public_address には UNIQUE制約をつけます。
-認証フローの最初は、フロントで web3.eth.coinbase で MetaMask の現在アカウントのウォレットアドレスを取得します。 MetaMask とは web3.js を使ってやりとりができます。 アドレスを用いてバックエンドに対し GET /api/users?public_address=0xcA540... のようにリクエストを行い nonce を取得します。 当然このAPIは認証なしで成功するので public にしてよいデータしか返すべきではありません。 (demoのコードはview層を書かずにuserオブジェクトをそのまま返しているのでidが返っていますが、返すべきではないです)
-users レコードがない場合はフロントは POST /api/users で public_address を送りユーザーアカウントを作成します。 バックエンドではランダム生成した nonce と共に users レコード作成し、フロントに nonce を返します。</description>
+まずはバックエンドで public_address と nonce を持った users テーブルを作成します。 public_address にはユーザーのウォレットアドレスを格納し、 nonce にはユーザー作成時&amp;amp;ログイン時に数字列をランダム生成した nonce 値を格納します。 public_address には UNIQUE制約をつけます。schema.rb はこんな感じ
+ActiveRecord::Schema.define(version: 2021_07_09_032722) do create_table &amp;#34;users&amp;#34;, force: :cascade do |t| t.string &amp;#34;public_address&amp;#34;, null: false t.bigint &amp;#34;nonce&amp;#34;, null: false t.index [&amp;#34;public_address&amp;#34;], name: &amp;#34;index_users_on_public_address&amp;#34;, unique: true end end 認証フローの最初は、フロントで web3.eth.coinbase で MetaMask の現在アカウントのウォレットアドレスを取得します。 MetaMask とは web3.</description>
     </item>
     
   </channel>
