@@ -46,7 +46,7 @@ params:
     homeInfoParams:
         Title: Naoya Ito
         Content: >
-            - 東京都内でフリーランスのソフトウェアエンジニアをしています。
+            - 東京都内でソフトウェアエンジニアをしています。
 
             - 詳細はこちら → [About Me](/about/)
 
@@ -73,7 +73,6 @@ menu:
           name: About
           url: /about/
           weight: 10
-
 # Read: https://github.com/adityatelange/hugo-PaperMod/wiki/FAQs#using-hugos-syntax-highlighter-chroma
 # pygmentsUseClasses: true
 # markup:
