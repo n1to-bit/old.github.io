@@ -15,7 +15,7 @@
       <description>書籍 「問題解決力を鍛える!アルゴリズムとデータ構造」 を読み切ったのですが、C++ STLの sort() には Introsort というアルゴリズムが使われていると載っているだけで、具体的にどのように実装されているのか詳細は書かれていませんでした。
 std::sort() の Syntaxは
 sort(first, last, comp) first, last: Random-access iterators to the initial and final positions of the sequence to be sorted. comp: Binary function that accepts two elements in the range as arguments, and returns a value convertible to bool. Time Complexity は
- Best Case – O(N log N) Average Case - O(N log N) Worse Case - O(N log N)  で、安定ソート(同じ値の順序が維持されるソート)ではないです。</description>
+Best Case – O(N log N) Average Case - O(N log N) Worse Case - O(N log N) で、安定ソート(同じ値の順序が維持されるソート)ではないです。</description>
     </item>
     
   </channel>

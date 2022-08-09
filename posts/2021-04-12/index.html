@@ -1,146 +1,32 @@
-<!doctype html><html lang=en dir=auto>
-<head><meta charset=utf-8>
-<meta http-equiv=x-ua-compatible content="IE=edge">
-<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=robots content="index, follow">
-<title>「コンピュータシステムの理論と実装」(Nand2Tetris) | nito95 blog</title>
-<meta name=keywords content="書評,アセンブラ,コンパイラ">
-<meta name=description content="低レイヤーの知識を幅広く身に着けようと思い、1ヶ月前から 「コンピュータシステムの理論と実装 ― モダンなコンピュータの作り方」 を読んで実践していました。
+<!doctype html><html lang=en dir=auto><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=robots content="index, follow"><title>「コンピュータシステムの理論と実装」(Nand2Tetris) | nito95 blog</title><meta name=keywords content="書評,アセンブラ,コンパイラ"><meta name=description content="低レイヤーの知識を幅広く身に着けようと思い、1ヶ月前から 「コンピュータシステムの理論と実装 ― モダンなコンピュータの作り方」 を読んで実践していました。
 最初にNandゲートを学んでから積み上げ式でALU、CPU、メモリ、アセンブラ、VM変換器、コンパイラ、OSを一気通貫で作っていくという本です。本自体はあまり大きくなくサックリできるかなと思って始めたのですが、非常にHeavyで濃密な時間を過ごすこととなりました。
 この本は今後もたまに読み返すことになると思います。
-  ちなみにこの本を読む前の自分の低レイヤーに関する知識は、
- 「プログラムはなぜ動くのか」 「コンピュータはなぜ動くのか」 「［試して理解］Linuxのしくみ」 「コーディングを支える技術」  を読んでいるレベルです。あと遊びでアセンブリでHello Worldを出力させたことがある程度でした。(参考: Macでアセンブリ言語のhello worldを実行する方法)
+ちなみにこの本を読む前の自分の低レイヤーに関する知識は、
+「プログラムはなぜ動くのか」 「コンピュータはなぜ動くのか」 「［試して理解］Linuxのしくみ」 「コーディングを支える技術」 を読んでいるレベルです。あと遊びでアセンブリでHello Worldを出力させたことがある程度でした。(参考: Macでアセンブリ言語のhello worldを実行する方法)
 大学で情報系の勉強をしていない自分は、論理ゲートやフリップフロップですら新鮮でした。この本ではハードウェアシミュレータを使って自分で作ったものを実際に動かすので非常に腑に落としやすく、定着度も深いものとなります。
 この本は各トピックの概要レベルしか理解できず、作るものもモダンなものとは程遠いと思いますが、ここからスタートして次に各トピックに特化された本を読むといいと思います。 CPUは「CPUの創りかた」 コンパイラは 「低レイヤを知りたい人のためのCコンパイラ作成入門」 OSは 「Operating-Systems-Three-Easy-Pieces」あたりで深める予定です。
-あと第6章のアセンブラと第7~8章のVM変換器は、競プロ用に使っているまだ経験の浅いC++で書いてみたので、C++のファイル操作や文字列操作の知見を深めるいいきっかけになりました。コードは github にあげています。">
-<meta name=author content>
-<link rel=canonical href=https://nito95.github.io/posts/2021-04-12/>
-<meta name=google-site-verification content="G-FT3WYS86E7">
-<link rel=stylesheet href=https://nito95.github.io/css/custom.css>
-<link crossorigin=anonymous href=/assets/css/stylesheet.min.35cd0f65a15cafa92372b8313deef5960aae04b90ad722f2bbf509eb0468137e.css integrity="sha256-Nc0PZaFcr6kjcrgxPe71lgquBLkK1yLyu/UJ6wRoE34=" rel="preload stylesheet" as=style>
-<script defer crossorigin=anonymous src=/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5+kdJvBz5iKbt6B5PJI=" onload=hljs.initHighlightingOnLoad()></script>
-<link rel=icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<link rel=icon type=image/png sizes=16x16 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<link rel=icon type=image/png sizes=32x32 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<link rel=apple-touch-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<link rel=mask-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<meta name=theme-color content="#2e2e33">
-<meta name=msapplication-TileColor content="#2e2e33">
-<meta name=generator content="Hugo 0.88.1">
-<meta property="og:title" content="「コンピュータシステムの理論と実装」(Nand2Tetris)">
-<meta property="og:description" content="低レイヤーの知識を幅広く身に着けようと思い、1ヶ月前から 「コンピュータシステムの理論と実装 ― モダンなコンピュータの作り方」 を読んで実践していました。
+あと第6章のアセンブラと第7~8章のVM変換器は、競プロ用に使っているまだ経験の浅いC++で書いてみたので、C++のファイル操作や文字列操作の知見を深めるいいきっかけになりました。コードは github にあげています。"><meta name=author content><link rel=canonical href=https://nito95.github.io/posts/2021-04-12/><meta name=google-site-verification content="G-FT3WYS86E7"><link rel=stylesheet href=https://nito95.github.io/css/custom.css><link crossorigin=anonymous href=/assets/css/stylesheet.min.35cd0f65a15cafa92372b8313deef5960aae04b90ad722f2bbf509eb0468137e.css integrity="sha256-Nc0PZaFcr6kjcrgxPe71lgquBLkK1yLyu/UJ6wRoE34=" rel="preload stylesheet" as=style><script defer crossorigin=anonymous src=/assets/js/highlight.min.e85ad0406048e8176e1c7661b25d5c69297ddfe41dc4124cf75ecb99a4f7b3d1.js integrity="sha256-6FrQQGBI6BduHHZhsl1caSl93+QdxBJM917LmaT3s9E=" onload=hljs.initHighlightingOnLoad()></script>
+<link rel=icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=icon type=image/png sizes=16x16 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=icon type=image/png sizes=32x32 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=apple-touch-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=mask-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><meta name=theme-color content="#2e2e33"><meta name=msapplication-TileColor content="#2e2e33"><meta name=generator content="Hugo 0.101.0"><meta property="og:title" content="「コンピュータシステムの理論と実装」(Nand2Tetris)"><meta property="og:description" content="低レイヤーの知識を幅広く身に着けようと思い、1ヶ月前から 「コンピュータシステムの理論と実装 ― モダンなコンピュータの作り方」 を読んで実践していました。
 最初にNandゲートを学んでから積み上げ式でALU、CPU、メモリ、アセンブラ、VM変換器、コンパイラ、OSを一気通貫で作っていくという本です。本自体はあまり大きくなくサックリできるかなと思って始めたのですが、非常にHeavyで濃密な時間を過ごすこととなりました。
 この本は今後もたまに読み返すことになると思います。
-  ちなみにこの本を読む前の自分の低レイヤーに関する知識は、
- 「プログラムはなぜ動くのか」 「コンピュータはなぜ動くのか」 「［試して理解］Linuxのしくみ」 「コーディングを支える技術」  を読んでいるレベルです。あと遊びでアセンブリでHello Worldを出力させたことがある程度でした。(参考: Macでアセンブリ言語のhello worldを実行する方法)
+ちなみにこの本を読む前の自分の低レイヤーに関する知識は、
+「プログラムはなぜ動くのか」 「コンピュータはなぜ動くのか」 「［試して理解］Linuxのしくみ」 「コーディングを支える技術」 を読んでいるレベルです。あと遊びでアセンブリでHello Worldを出力させたことがある程度でした。(参考: Macでアセンブリ言語のhello worldを実行する方法)
 大学で情報系の勉強をしていない自分は、論理ゲートやフリップフロップですら新鮮でした。この本ではハードウェアシミュレータを使って自分で作ったものを実際に動かすので非常に腑に落としやすく、定着度も深いものとなります。
 この本は各トピックの概要レベルしか理解できず、作るものもモダンなものとは程遠いと思いますが、ここからスタートして次に各トピックに特化された本を読むといいと思います。 CPUは「CPUの創りかた」 コンパイラは 「低レイヤを知りたい人のためのCコンパイラ作成入門」 OSは 「Operating-Systems-Three-Easy-Pieces」あたりで深める予定です。
-あと第6章のアセンブラと第7~8章のVM変換器は、競プロ用に使っているまだ経験の浅いC++で書いてみたので、C++のファイル操作や文字列操作の知見を深めるいいきっかけになりました。コードは github にあげています。">
-<meta property="og:type" content="article">
-<meta property="og:url" content="https://nito95.github.io/posts/2021-04-12/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2021-04-12T00:00:00+00:00">
-<meta property="article:modified_time" content="2021-04-12T00:00:00+00:00"><meta property="og:site_name" content="nito95">
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="「コンピュータシステムの理論と実装」(Nand2Tetris)">
-<meta name=twitter:description content="低レイヤーの知識を幅広く身に着けようと思い、1ヶ月前から 「コンピュータシステムの理論と実装 ― モダンなコンピュータの作り方」 を読んで実践していました。
+あと第6章のアセンブラと第7~8章のVM変換器は、競プロ用に使っているまだ経験の浅いC++で書いてみたので、C++のファイル操作や文字列操作の知見を深めるいいきっかけになりました。コードは github にあげています。"><meta property="og:type" content="article"><meta property="og:url" content="https://nito95.github.io/posts/2021-04-12/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2021-04-12T00:00:00+00:00"><meta property="article:modified_time" content="2021-04-12T00:00:00+00:00"><meta property="og:site_name" content="nito95"><meta name=twitter:card content="summary"><meta name=twitter:title content="「コンピュータシステムの理論と実装」(Nand2Tetris)"><meta name=twitter:description content="低レイヤーの知識を幅広く身に着けようと思い、1ヶ月前から 「コンピュータシステムの理論と実装 ― モダンなコンピュータの作り方」 を読んで実践していました。
 最初にNandゲートを学んでから積み上げ式でALU、CPU、メモリ、アセンブラ、VM変換器、コンパイラ、OSを一気通貫で作っていくという本です。本自体はあまり大きくなくサックリできるかなと思って始めたのですが、非常にHeavyで濃密な時間を過ごすこととなりました。
 この本は今後もたまに読み返すことになると思います。
-  ちなみにこの本を読む前の自分の低レイヤーに関する知識は、
- 「プログラムはなぜ動くのか」 「コンピュータはなぜ動くのか」 「［試して理解］Linuxのしくみ」 「コーディングを支える技術」  を読んでいるレベルです。あと遊びでアセンブリでHello Worldを出力させたことがある程度でした。(参考: Macでアセンブリ言語のhello worldを実行する方法)
+ちなみにこの本を読む前の自分の低レイヤーに関する知識は、
+「プログラムはなぜ動くのか」 「コンピュータはなぜ動くのか」 「［試して理解］Linuxのしくみ」 「コーディングを支える技術」 を読んでいるレベルです。あと遊びでアセンブリでHello Worldを出力させたことがある程度でした。(参考: Macでアセンブリ言語のhello worldを実行する方法)
 大学で情報系の勉強をしていない自分は、論理ゲートやフリップフロップですら新鮮でした。この本ではハードウェアシミュレータを使って自分で作ったものを実際に動かすので非常に腑に落としやすく、定着度も深いものとなります。
 この本は各トピックの概要レベルしか理解できず、作るものもモダンなものとは程遠いと思いますが、ここからスタートして次に各トピックに特化された本を読むといいと思います。 CPUは「CPUの創りかた」 コンパイラは 「低レイヤを知りたい人のためのCコンパイラ作成入門」 OSは 「Operating-Systems-Three-Easy-Pieces」あたりで深める予定です。
-あと第6章のアセンブラと第7~8章のVM変換器は、競プロ用に使っているまだ経験の浅いC++で書いてみたので、C++のファイル操作や文字列操作の知見を深めるいいきっかけになりました。コードは github にあげています。">
-<script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://nito95.github.io/posts/"},{"@type":"ListItem","position":2,"name":"「コンピュータシステムの理論と実装」(Nand2Tetris)","item":"https://nito95.github.io/posts/2021-04-12/"}]}</script>
-<script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"「コンピュータシステムの理論と実装」(Nand2Tetris)","name":"「コンピュータシステムの理論と実装」(Nand2Tetris)","description":"低レイヤーの知識を幅広く身に着けようと思い、1ヶ月前から 「コンピュータシステムの理論と実装 ― モダンなコンピュータの作り方」 を読んで実践していました。\n最初にNandゲートを学んでから積み上げ式でALU、CPU、メモリ、アセンブラ、VM変換器、コンパイラ、OSを一気通貫で作っていくという本です。本自体はあまり大きくなくサックリできるかなと思って始めたのですが、非常にHeavyで濃密な時間を過ごすこととなりました。\nこの本は今後もたまに読み返すことになると思います。\n  ちなみにこの本を読む前の自分の低レイヤーに関する知識は、\n 「プログラムはなぜ動くのか」 「コンピュータはなぜ動くのか」 「［試して理解］Linuxのしくみ」 「コーディングを支える技術」  を読んでいるレベルです。あと遊びでアセンブリでHello Worldを出力させたことがある程度でした。(参考: Macでアセンブリ言語のhello worldを実行する方法)\n大学で情報系の勉強をしていない自分は、論理ゲートやフリップフロップですら新鮮でした。この本ではハードウェアシミュレータを使って自分で作ったものを実際に動かすので非常に腑に落としやすく、定着度も深いものとなります。\nこの本は各トピックの概要レベルしか理解できず、作るものもモダンなものとは程遠いと思いますが、ここからスタートして次に各トピックに特化された本を読むといいと思います。 CPUは「CPUの創りかた」 コンパイラは 「低レイヤを知りたい人のためのCコンパイラ作成入門」 OSは 「Operating-Systems-Three-Easy-Pieces」あたりで深める予定です。\nあと第6章のアセンブラと第7~8章のVM変換器は、競プロ用に使っているまだ経験の浅いC++で書いてみたので、C++のファイル操作や文字列操作の知見を深めるいいきっかけになりました。コードは github にあげています。","keywords":["書評","アセンブラ","コンパイラ"],"articleBody":"低レイヤーの知識を幅広く身に着けようと思い、1ヶ月前から 「コンピュータシステムの理論と実装 ― モダンなコンピュータの作り方」 を読んで実践していました。\n最初にNandゲートを学んでから積み上げ式でALU、CPU、メモリ、アセンブラ、VM変換器、コンパイラ、OSを一気通貫で作っていくという本です。本自体はあまり大きくなくサックリできるかなと思って始めたのですが、非常にHeavyで濃密な時間を過ごすこととなりました。\nこの本は今後もたまに読み返すことになると思います。\n  ちなみにこの本を読む前の自分の低レイヤーに関する知識は、\n 「プログラムはなぜ動くのか」 「コンピュータはなぜ動くのか」 「［試して理解］Linuxのしくみ」 「コーディングを支える技術」  を読んでいるレベルです。あと遊びでアセンブリでHello Worldを出力させたことがある程度でした。(参考: Macでアセンブリ言語のhello worldを実行する方法)\n大学で情報系の勉強をしていない自分は、論理ゲートやフリップフロップですら新鮮でした。この本ではハードウェアシミュレータを使って自分で作ったものを実際に動かすので非常に腑に落としやすく、定着度も深いものとなります。\nこの本は各トピックの概要レベルしか理解できず、作るものもモダンなものとは程遠いと思いますが、ここからスタートして次に各トピックに特化された本を読むといいと思います。 CPUは「CPUの創りかた」 コンパイラは 「低レイヤを知りたい人のためのCコンパイラ作成入門」 OSは 「Operating-Systems-Three-Easy-Pieces」あたりで深める予定です。\nあと第6章のアセンブラと第7~8章のVM変換器は、競プロ用に使っているまだ経験の浅いC++で書いてみたので、C++のファイル操作や文字列操作の知見を深めるいいきっかけになりました。コードは github にあげています。\n","wordCount":"26","inLanguage":"en","datePublished":"2021-04-12T00:00:00Z","dateModified":"2021-04-12T00:00:00Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://nito95.github.io/posts/2021-04-12/"},"publisher":{"@type":"Organization","name":"nito95 blog","logo":{"@type":"ImageObject","url":"https://nito95.github.io/%3Clink%20/%20abs%20url%3E"}}}</script>
-</head>
-<body id=top>
-<script>localStorage.getItem("pref-theme")==="dark"&&document.body.classList.add('dark')</script>
-<noscript>
-<style type=text/css>#theme-toggle,.top-link{display:none}</style>
-</noscript>
-<header class=header>
-<nav class=nav>
-<div class=logo>
-<a href=https://nito95.github.io/ accesskey=h title="nito95 blog (Alt + H)">nito95 blog</a>
-<span class=logo-switches>
-<button id=theme-toggle accesskey=t title="(Alt + T)"><svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-</button>
-</span>
-</div>
-<ul id=menu>
-<li>
-<a href=https://nito95.github.io/about/ title=About>
-<span>About</span>
-</a>
-</li>
-</ul>
-</nav>
-</header>
-<main class=main>
-<article class=post-single>
-<header class=post-header>
-<h1 class=post-title>
-「コンピュータシステムの理論と実装」(Nand2Tetris)
-</h1>
-<div class=post-meta>April 12, 2021
-</div>
-</header>
-<div class=post-content><p>低レイヤーの知識を幅広く身に着けようと思い、1ヶ月前から 「<a href=https://www.amazon.co.jp/dp/4873117127/>コンピュータシステムの理論と実装 ― モダンなコンピュータの作り方</a>」 を読んで実践していました。</p>
-<p>最初にNandゲートを学んでから積み上げ式でALU、CPU、メモリ、アセンブラ、VM変換器、コンパイラ、OSを一気通貫で作っていくという本です。本自体はあまり大きくなくサックリできるかなと思って始めたのですが、非常にHeavyで濃密な時間を過ごすこととなりました。</p>
-<p>この本は今後もたまに読み返すことになると思います。</p>
-<figure>
-<img loading=lazy src=/images/2021-04-12-1.jpg width=160>
-</figure>
-<p>ちなみにこの本を読む前の自分の低レイヤーに関する知識は、</p>
-<ul>
-<li>「<a href=https://www.amazon.co.jp/dp/4822283151/>プログラムはなぜ動くのか</a>」</li>
-<li>「<a href=https://www.amazon.co.jp/dp/4822281655/>コンピュータはなぜ動くのか</a>」</li>
-<li>「<a href=https://www.amazon.co.jp/dp/B079YJS1J1/>［試して理解］Linuxのしくみ</a>」</li>
-<li>「<a href=https://www.amazon.co.jp/dp/B07JKLS4KM/>コーディングを支える技術</a>」</li>
-</ul>
-<p>を読んでいるレベルです。あと遊びでアセンブリでHello Worldを出力させたことがある程度でした。(参考: <a href=https://www.toumasu-program.net/entry/2019/08/13/083946>Macでアセンブリ言語のhello worldを実行する方法</a>)</p>
-<p>大学で情報系の勉強をしていない自分は、論理ゲートやフリップフロップですら新鮮でした。この本ではハードウェアシミュレータを使って自分で作ったものを実際に動かすので非常に腑に落としやすく、定着度も深いものとなります。</p>
-<p>この本は各トピックの概要レベルしか理解できず、作るものもモダンなものとは程遠いと思いますが、ここからスタートして次に各トピックに特化された本を読むといいと思います。
+あと第6章のアセンブラと第7~8章のVM変換器は、競プロ用に使っているまだ経験の浅いC++で書いてみたので、C++のファイル操作や文字列操作の知見を深めるいいきっかけになりました。コードは github にあげています。"><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://nito95.github.io/posts/"},{"@type":"ListItem","position":2,"name":"「コンピュータシステムの理論と実装」(Nand2Tetris)","item":"https://nito95.github.io/posts/2021-04-12/"}]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"「コンピュータシステムの理論と実装」(Nand2Tetris)","name":"「コンピュータシステムの理論と実装」(Nand2Tetris)","description":"低レイヤーの知識を幅広く身に着けようと思い、1ヶ月前から 「コンピュータシステムの理論と実装 ― モダンなコンピュータの作り方」 を読んで実践していました。\n最初にNandゲートを学んでから積み上げ式でALU、CPU、メモリ、アセンブラ、VM変換器、コンパイラ、OSを一気通貫で作っていくという本です。本自体はあまり大きくなくサックリできるかなと思って始めたのですが、非常にHeavyで濃密な時間を過ごすこととなりました。\nこの本は今後もたまに読み返すことになると思います。\nちなみにこの本を読む前の自分の低レイヤーに関する知識は、\n「プログラムはなぜ動くのか」 「コンピュータはなぜ動くのか」 「［試して理解］Linuxのしくみ」 「コーディングを支える技術」 を読んでいるレベルです。あと遊びでアセンブリでHello Worldを出力させたことがある程度でした。(参考: Macでアセンブリ言語のhello worldを実行する方法)\n大学で情報系の勉強をしていない自分は、論理ゲートやフリップフロップですら新鮮でした。この本ではハードウェアシミュレータを使って自分で作ったものを実際に動かすので非常に腑に落としやすく、定着度も深いものとなります。\nこの本は各トピックの概要レベルしか理解できず、作るものもモダンなものとは程遠いと思いますが、ここからスタートして次に各トピックに特化された本を読むといいと思います。 CPUは「CPUの創りかた」 コンパイラは 「低レイヤを知りたい人のためのCコンパイラ作成入門」 OSは 「Operating-Systems-Three-Easy-Pieces」あたりで深める予定です。\nあと第6章のアセンブラと第7~8章のVM変換器は、競プロ用に使っているまだ経験の浅いC++で書いてみたので、C++のファイル操作や文字列操作の知見を深めるいいきっかけになりました。コードは github にあげています。","keywords":["書評","アセンブラ","コンパイラ"],"articleBody":"低レイヤーの知識を幅広く身に着けようと思い、1ヶ月前から 「コンピュータシステムの理論と実装 ― モダンなコンピュータの作り方」 を読んで実践していました。\n最初にNandゲートを学んでから積み上げ式でALU、CPU、メモリ、アセンブラ、VM変換器、コンパイラ、OSを一気通貫で作っていくという本です。本自体はあまり大きくなくサックリできるかなと思って始めたのですが、非常にHeavyで濃密な時間を過ごすこととなりました。\nこの本は今後もたまに読み返すことになると思います。\nちなみにこの本を読む前の自分の低レイヤーに関する知識は、\n「プログラムはなぜ動くのか」 「コンピュータはなぜ動くのか」 「［試して理解］Linuxのしくみ」 「コーディングを支える技術」 を読んでいるレベルです。あと遊びでアセンブリでHello Worldを出力させたことがある程度でした。(参考: Macでアセンブリ言語のhello worldを実行する方法)\n大学で情報系の勉強をしていない自分は、論理ゲートやフリップフロップですら新鮮でした。この本ではハードウェアシミュレータを使って自分で作ったものを実際に動かすので非常に腑に落としやすく、定着度も深いものとなります。\nこの本は各トピックの概要レベルしか理解できず、作るものもモダンなものとは程遠いと思いますが、ここからスタートして次に各トピックに特化された本を読むといいと思います。 CPUは「CPUの創りかた」 コンパイラは 「低レイヤを知りたい人のためのCコンパイラ作成入門」 OSは 「Operating-Systems-Three-Easy-Pieces」あたりで深める予定です。\nあと第6章のアセンブラと第7~8章のVM変換器は、競プロ用に使っているまだ経験の浅いC++で書いてみたので、C++のファイル操作や文字列操作の知見を深めるいいきっかけになりました。コードは github にあげています。\n","wordCount":"26","inLanguage":"en","datePublished":"2021-04-12T00:00:00Z","dateModified":"2021-04-12T00:00:00Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://nito95.github.io/posts/2021-04-12/"},"publisher":{"@type":"Organization","name":"nito95 blog","logo":{"@type":"ImageObject","url":"https://nito95.github.io/%3Clink%20/%20abs%20url%3E"}}}</script></head><body id=top><script>localStorage.getItem("pref-theme")==="dark"&&document.body.classList.add("dark")</script><noscript><style type=text/css>#theme-toggle,.top-link{display:none}</style></noscript><header class=header><nav class=nav><div class=logo><a href=https://nito95.github.io/ accesskey=h title="nito95 blog (Alt + H)">nito95 blog</a>
+<span class=logo-switches><button id=theme-toggle accesskey=t title="(Alt + T)"><svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></button></span></div><ul id=menu><li><a href=https://nito95.github.io/about/ title=About><span>About</span></a></li></ul></nav></header><main class=main><article class=post-single><header class=post-header><h1 class=post-title>「コンピュータシステムの理論と実装」(Nand2Tetris)</h1><div class=post-meta>April 12, 2021</div></header><div class=post-content><p>低レイヤーの知識を幅広く身に着けようと思い、1ヶ月前から 「<a href=https://www.amazon.co.jp/dp/4873117127/>コンピュータシステムの理論と実装 ― モダンなコンピュータの作り方</a>」 を読んで実践していました。</p><p>最初にNandゲートを学んでから積み上げ式でALU、CPU、メモリ、アセンブラ、VM変換器、コンパイラ、OSを一気通貫で作っていくという本です。本自体はあまり大きくなくサックリできるかなと思って始めたのですが、非常にHeavyで濃密な時間を過ごすこととなりました。</p><p>この本は今後もたまに読み返すことになると思います。</p><figure><img loading=lazy src=/images/2021-04-12-1.jpg width=160></figure><p>ちなみにこの本を読む前の自分の低レイヤーに関する知識は、</p><ul><li>「<a href=https://www.amazon.co.jp/dp/4822283151/>プログラムはなぜ動くのか</a>」</li><li>「<a href=https://www.amazon.co.jp/dp/4822281655/>コンピュータはなぜ動くのか</a>」</li><li>「<a href=https://www.amazon.co.jp/dp/B079YJS1J1/>［試して理解］Linuxのしくみ</a>」</li><li>「<a href=https://www.amazon.co.jp/dp/B07JKLS4KM/>コーディングを支える技術</a>」</li></ul><p>を読んでいるレベルです。あと遊びでアセンブリでHello Worldを出力させたことがある程度でした。(参考: <a href=https://www.toumasu-program.net/entry/2019/08/13/083946>Macでアセンブリ言語のhello worldを実行する方法</a>)</p><p>大学で情報系の勉強をしていない自分は、論理ゲートやフリップフロップですら新鮮でした。この本ではハードウェアシミュレータを使って自分で作ったものを実際に動かすので非常に腑に落としやすく、定着度も深いものとなります。</p><p>この本は各トピックの概要レベルしか理解できず、作るものもモダンなものとは程遠いと思いますが、ここからスタートして次に各トピックに特化された本を読むといいと思います。
 CPUは「<a href=https://www.amazon.co.jp/dp/4839909865>CPUの創りかた</a>」
 コンパイラは 「<a href=https://www.sigbus.info/compilerbook>低レイヤを知りたい人のためのCコンパイラ作成入門</a>」
-OSは 「<a href=https://github.com/syarochan/Operating-Systems-Three-Easy-Pieces-in-japanese>Operating-Systems-Three-Easy-Pieces</a>」あたりで深める予定です。</p>
-<p>あと第6章のアセンブラと第7~8章のVM変換器は、競プロ用に使っているまだ経験の浅いC++で書いてみたので、C++のファイル操作や文字列操作の知見を深めるいいきっかけになりました。コードは <a href=https://github.com/nito95/nand2tetris>github</a> にあげています。</p>
-</div>
-<footer class=post-footer>
-<ul class=post-tags>
-<li><a href=https://nito95.github.io/tags/%E6%9B%B8%E8%A9%95/>書評</a></li>
-<li><a href=https://nito95.github.io/tags/%E3%82%A2%E3%82%BB%E3%83%B3%E3%83%96%E3%83%A9/>アセンブラ</a></li>
-<li><a href=https://nito95.github.io/tags/%E3%82%B3%E3%83%B3%E3%83%91%E3%82%A4%E3%83%A9/>コンパイラ</a></li>
-</ul>
-<nav class=paginav>
-<a class=prev href=https://nito95.github.io/posts/2021-07-02/>
-<span class=title>« Prev Page</span>
-<br>
-<span>C++の std::sort() で使われている Introsort</span>
-</a>
-<a class=next href=https://nito95.github.io/posts/2021-03-02/>
-<span class=title>Next Page »</span>
-<br>
-<span>AtCoder C++入門 APG4b</span>
-</a>
-</nav>
-</footer>
-</article>
-</main>
-<footer class=footer>
-<span>&copy; 2021 <a href=https://nito95.github.io/>nito95 blog</a></span>
-<span>
-Powered by
+OSは 「<a href=https://github.com/syarochan/Operating-Systems-Three-Easy-Pieces-in-japanese>Operating-Systems-Three-Easy-Pieces</a>」あたりで深める予定です。</p><p>あと第6章のアセンブラと第7~8章のVM変換器は、競プロ用に使っているまだ経験の浅いC++で書いてみたので、C++のファイル操作や文字列操作の知見を深めるいいきっかけになりました。コードは <a href=https://github.com/nito95/nand2tetris>github</a> にあげています。</p></div><footer class=post-footer><ul class=post-tags><li><a href=https://nito95.github.io/tags/%E6%9B%B8%E8%A9%95/>書評</a></li><li><a href=https://nito95.github.io/tags/%E3%82%A2%E3%82%BB%E3%83%B3%E3%83%96%E3%83%A9/>アセンブラ</a></li><li><a href=https://nito95.github.io/tags/%E3%82%B3%E3%83%B3%E3%83%91%E3%82%A4%E3%83%A9/>コンパイラ</a></li></ul><nav class=paginav><a class=prev href=https://nito95.github.io/posts/2021-07-02/><span class=title>« Prev Page</span><br><span>C++の std::sort() で使われている Introsort</span></a>
+<a class=next href=https://nito95.github.io/posts/2021-03-02/><span class=title>Next Page »</span><br><span>AtCoder C++入門 APG4b</span></a></nav></footer></article></main><footer class=footer><span>&copy; 2022 <a href=https://nito95.github.io/>nito95 blog</a></span>
+<span>Powered by
 <a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
-        <a href=https://git.io/hugopapermod rel=noopener target=_blank>PaperMod</a>
-</span>
-</footer>
-<a href=#top aria-label="go to top" title="Go to Top (Alt + G)">
-<button class=top-link id=top-link type=button accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
-</button>
-</a>
-<script>let menu=document.getElementById('menu');menu.scrollLeft=localStorage.getItem("menu-scroll-position"),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)},document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener("click",function(b){b.preventDefault();var a=this.getAttribute("href").substr(1);window.matchMedia('(prefers-reduced-motion: reduce)').matches?document.querySelector(`[id='${decodeURIComponent(a)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(a)}']`).scrollIntoView({behavior:"smooth"}),a==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${a}`)})})</script>
-<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
-<script>document.getElementById("theme-toggle").addEventListener("click",()=>{document.body.className.includes("dark")?(document.body.classList.remove('dark'),localStorage.setItem("pref-theme",'light')):(document.body.classList.add('dark'),localStorage.setItem("pref-theme",'dark'))})</script>
-</body>
-</html>
+        <a href=https://git.io/hugopapermod rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top aria-label="go to top" title="Go to Top (Alt + G)"><button class=top-link id=top-link type=button accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg></button></a>
+<script>let menu=document.getElementById("menu");menu.scrollLeft=localStorage.getItem("menu-scroll-position"),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)},document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(e){e.preventDefault();var t=this.getAttribute("href").substr(1);window.matchMedia("(prefers-reduced-motion: reduce)").matches?document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView({behavior:"smooth"}),t==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${t}`)})})</script><script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script><script>document.getElementById("theme-toggle").addEventListener("click",()=>{document.body.className.includes("dark")?(document.body.classList.remove("dark"),localStorage.setItem("pref-theme","light")):(document.body.classList.add("dark"),localStorage.setItem("pref-theme","dark"))})</script></body></html>

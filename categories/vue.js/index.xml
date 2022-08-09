@@ -15,7 +15,7 @@
       <description>最近NFTのマーケットプレイスサービスを友人のスタートアップで作っているのですが、お勉強がてら MetaMask ログイン機能を作ってみました。
 パスワード不要で nonce 値を使った MetaMask 署名でのログインとなります。
 完成イメージ MetaMask は ERC20準拠のトークンを保管するWebウォレットです。 ユーザー体験的にはGoogleやGithubなどのソーシャルログインと似ています。
-  これはRails &amp;amp; Vue.jsで作っており、ソースコードはGithubにあげています → nito95/metamask-login-rails-vue
+これはRails &amp;amp; Vue.jsで作っており、ソースコードはGithubにあげています → nito95/metamask-login-rails-vue
 仕組み フロントがウォレットの秘密鍵を使って署名をすることでアカウントの所有権を証明します。バックエンドで署名済みデータ、ウォレットアドレス、nonce 使って検証できればそのウォレットアドレスはユーザー所有物だと認証でき、JWTを発行して以降の通信を行います。
 詳細の実装を説明していきます。
 まずはバックエンドで public_address と nonce を持った users テーブルを作成します。 public_address にはユーザーのウォレットアドレスを格納し、 nonce にはユーザー作成時&amp;amp;ログイン時に数字列をランダム生成した nonce 値を格納します。 public_address には UNIQUE制約をつけます。schema.rb はこんな感じ

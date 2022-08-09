@@ -1,210 +1,56 @@
-<!doctype html><html lang=en dir=auto>
-<head><meta charset=utf-8>
-<meta http-equiv=x-ua-compatible content="IE=edge">
-<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=robots content="index, follow">
-<title>Tile38 による Geofencing と R-tree | nito95 blog</title>
-<meta name=keywords content>
-<meta name=description content="現在働いている スマートドライブ では Geofencing の機能を使ったソリューションを提供しています。
+<!doctype html><html lang=en dir=auto><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=robots content="index, follow"><title>Tile38 による Geofencing と R-tree | nito95 blog</title><meta name=keywords content><meta name=description content="現在働いている スマートドライブ では Geofencing の機能を使ったソリューションを提供しています。
 Geofencing とは、あるオブジェクトが特定のエリアに 入る/出る を検知し、アプリやソフトウェアで何かのアクションを実行することです。 これを利用することで、例えば配送車が倉庫の近くに来たタイミングで倉庫管理者に通知が飛んで受け入れ作業を効率的に行える、など様々な形で応用できます。
-  (gif は Tile38 https://github.com/tidwall/tile38 より)
+(gif は Tile38 https://github.com/tidwall/tile38 より)
 弊社では地点情報は PostGIS に store し、 Geofencing は自作をしていますが、Tile38 というOSSのライブラリは In-memory GeoDatabase & Geofencing の機能が提供されていたので、試しに使ってみて、どうやって実装しているのかソースコードを簡単に読んでみました。
 使用した Tile38 のバージョンは v1.21.1 です。
 How to use Dockerで tile38 サーバーを実行できます。
 $ docker pull tile38/tile38 $ docker run -p 9851:9851 tile38/tile38 tile38 に繋ぐ cli クライアントは tile38-cli で接続できます。Dockerでは -net=host で ネットワークを共有する必要があります。
-$ docker run --net=host -it tile38/tile38 tile38-cli 127.0.0.1:9851> SET fleet truck1 POINT 33.">
-<meta name=author content>
-<link rel=canonical href=https://nito95.github.io/posts/2020-07-08/>
-<meta name=google-site-verification content="G-FT3WYS86E7">
-<link rel=stylesheet href=https://nito95.github.io/css/custom.css>
-<link crossorigin=anonymous href=/assets/css/stylesheet.min.35cd0f65a15cafa92372b8313deef5960aae04b90ad722f2bbf509eb0468137e.css integrity="sha256-Nc0PZaFcr6kjcrgxPe71lgquBLkK1yLyu/UJ6wRoE34=" rel="preload stylesheet" as=style>
-<script defer crossorigin=anonymous src=/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5+kdJvBz5iKbt6B5PJI=" onload=hljs.initHighlightingOnLoad()></script>
-<link rel=icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<link rel=icon type=image/png sizes=16x16 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<link rel=icon type=image/png sizes=32x32 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<link rel=apple-touch-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<link rel=mask-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<meta name=theme-color content="#2e2e33">
-<meta name=msapplication-TileColor content="#2e2e33">
-<meta name=generator content="Hugo 0.88.1">
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.css integrity=sha384-Um5gpz1odJg5Z4HAmzPtgZKdTBHZdw8S29IecapCSB31ligYPhHQZMIlWLYQGVoc crossorigin=anonymous>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.js integrity=sha384-YNHdsYkH6gMx9y3mRkmcJ2mFUjTd0qNQQvY9VYZgQd7DcN7env35GzlmFaZ23JGp crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/contrib/auto-render.min.js integrity=sha384-vZTG03m+2yp6N6BNi5iM4rW4oIwk5DfcNdFfxkk9ZWpDriOkXX8voJBFrAO7MpVl crossorigin=anonymous onload=renderMathInElement(document.body)></script>
-<meta property="og:title" content="Tile38 による Geofencing と R-tree">
-<meta property="og:description" content="現在働いている スマートドライブ では Geofencing の機能を使ったソリューションを提供しています。
+$ docker run --net=host -it tile38/tile38 tile38-cli 127.0.0.1:9851> SET fleet truck1 POINT 33."><meta name=author content><link rel=canonical href=https://nito95.github.io/posts/2020-07-08/><meta name=google-site-verification content="G-FT3WYS86E7"><link rel=stylesheet href=https://nito95.github.io/css/custom.css><link crossorigin=anonymous href=/assets/css/stylesheet.min.35cd0f65a15cafa92372b8313deef5960aae04b90ad722f2bbf509eb0468137e.css integrity="sha256-Nc0PZaFcr6kjcrgxPe71lgquBLkK1yLyu/UJ6wRoE34=" rel="preload stylesheet" as=style><script defer crossorigin=anonymous src=/assets/js/highlight.min.e85ad0406048e8176e1c7661b25d5c69297ddfe41dc4124cf75ecb99a4f7b3d1.js integrity="sha256-6FrQQGBI6BduHHZhsl1caSl93+QdxBJM917LmaT3s9E=" onload=hljs.initHighlightingOnLoad()></script>
+<link rel=icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=icon type=image/png sizes=16x16 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=icon type=image/png sizes=32x32 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=apple-touch-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=mask-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><meta name=theme-color content="#2e2e33"><meta name=msapplication-TileColor content="#2e2e33"><meta name=generator content="Hugo 0.101.0"><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.css integrity=sha384-Um5gpz1odJg5Z4HAmzPtgZKdTBHZdw8S29IecapCSB31ligYPhHQZMIlWLYQGVoc crossorigin=anonymous><script defer src=https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.js integrity=sha384-YNHdsYkH6gMx9y3mRkmcJ2mFUjTd0qNQQvY9VYZgQd7DcN7env35GzlmFaZ23JGp crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/contrib/auto-render.min.js integrity=sha384-vZTG03m+2yp6N6BNi5iM4rW4oIwk5DfcNdFfxkk9ZWpDriOkXX8voJBFrAO7MpVl crossorigin=anonymous onload=renderMathInElement(document.body)></script><meta property="og:title" content="Tile38 による Geofencing と R-tree"><meta property="og:description" content="現在働いている スマートドライブ では Geofencing の機能を使ったソリューションを提供しています。
 Geofencing とは、あるオブジェクトが特定のエリアに 入る/出る を検知し、アプリやソフトウェアで何かのアクションを実行することです。 これを利用することで、例えば配送車が倉庫の近くに来たタイミングで倉庫管理者に通知が飛んで受け入れ作業を効率的に行える、など様々な形で応用できます。
-  (gif は Tile38 https://github.com/tidwall/tile38 より)
+(gif は Tile38 https://github.com/tidwall/tile38 より)
 弊社では地点情報は PostGIS に store し、 Geofencing は自作をしていますが、Tile38 というOSSのライブラリは In-memory GeoDatabase & Geofencing の機能が提供されていたので、試しに使ってみて、どうやって実装しているのかソースコードを簡単に読んでみました。
 使用した Tile38 のバージョンは v1.21.1 です。
 How to use Dockerで tile38 サーバーを実行できます。
 $ docker pull tile38/tile38 $ docker run -p 9851:9851 tile38/tile38 tile38 に繋ぐ cli クライアントは tile38-cli で接続できます。Dockerでは -net=host で ネットワークを共有する必要があります。
-$ docker run --net=host -it tile38/tile38 tile38-cli 127.0.0.1:9851> SET fleet truck1 POINT 33.">
-<meta property="og:type" content="article">
-<meta property="og:url" content="https://nito95.github.io/posts/2020-07-08/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2020-07-08T00:00:00+00:00">
-<meta property="article:modified_time" content="2020-07-08T00:00:00+00:00"><meta property="og:site_name" content="nito95">
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Tile38 による Geofencing と R-tree">
-<meta name=twitter:description content="現在働いている スマートドライブ では Geofencing の機能を使ったソリューションを提供しています。
+$ docker run --net=host -it tile38/tile38 tile38-cli 127.0.0.1:9851> SET fleet truck1 POINT 33."><meta property="og:type" content="article"><meta property="og:url" content="https://nito95.github.io/posts/2020-07-08/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2020-07-08T00:00:00+00:00"><meta property="article:modified_time" content="2020-07-08T00:00:00+00:00"><meta property="og:site_name" content="nito95"><meta name=twitter:card content="summary"><meta name=twitter:title content="Tile38 による Geofencing と R-tree"><meta name=twitter:description content="現在働いている スマートドライブ では Geofencing の機能を使ったソリューションを提供しています。
 Geofencing とは、あるオブジェクトが特定のエリアに 入る/出る を検知し、アプリやソフトウェアで何かのアクションを実行することです。 これを利用することで、例えば配送車が倉庫の近くに来たタイミングで倉庫管理者に通知が飛んで受け入れ作業を効率的に行える、など様々な形で応用できます。
-  (gif は Tile38 https://github.com/tidwall/tile38 より)
+(gif は Tile38 https://github.com/tidwall/tile38 より)
 弊社では地点情報は PostGIS に store し、 Geofencing は自作をしていますが、Tile38 というOSSのライブラリは In-memory GeoDatabase & Geofencing の機能が提供されていたので、試しに使ってみて、どうやって実装しているのかソースコードを簡単に読んでみました。
 使用した Tile38 のバージョンは v1.21.1 です。
 How to use Dockerで tile38 サーバーを実行できます。
 $ docker pull tile38/tile38 $ docker run -p 9851:9851 tile38/tile38 tile38 に繋ぐ cli クライアントは tile38-cli で接続できます。Dockerでは -net=host で ネットワークを共有する必要があります。
-$ docker run --net=host -it tile38/tile38 tile38-cli 127.0.0.1:9851> SET fleet truck1 POINT 33.">
-<script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://nito95.github.io/posts/"},{"@type":"ListItem","position":2,"name":"Tile38 による Geofencing と R-tree","item":"https://nito95.github.io/posts/2020-07-08/"}]}</script>
-<script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"Tile38 による Geofencing と R-tree","name":"Tile38 による Geofencing と R-tree","description":"現在働いている スマートドライブ では Geofencing \u0008の機能を使ったソリューションを提供しています。\nGeofencing とは、あるオブジェクトが特定のエリアに 入る/出る を検知し、アプリやソフトウェアで何かのアクションを実行することです。 これを利用することで、例えば配送車が倉庫の近くに来たタイミングで倉庫管理者に通知が飛んで受け入れ作業を効率的に行える、など様々な形で応用できます。\n  (gif は Tile38 https://github.com/tidwall/tile38 より)\n弊社では地点情報は PostGIS に store し、 Geofencing は自作をしていますが、Tile38 というOSSのライブラリは In-memory GeoDatabase \u0026amp; Geofencing の機能が提供されていたので、試しに使ってみて、どうやって実装しているのかソースコードを簡単に読んでみました。\n使用した Tile38 のバージョンは v1.21.1 です。\nHow to use Dockerで tile38 サーバーを実行できます。\n$ docker pull tile38/tile38 $ docker run -p 9851:9851 tile38/tile38 tile38 に繋ぐ cli クライアントは tile38-cli で接続できます。Dockerでは -net=host で ネットワークを共有する必要があります。\n$ docker run --net=host -it tile38/tile38 tile38-cli 127.0.0.1:9851\u0026gt; SET fleet truck1 POINT 33.","keywords":[],"articleBody":"現在働いている スマートドライブ では Geofencing \u0008の機能を使ったソリューションを提供しています。\nGeofencing とは、あるオブジェクトが特定のエリアに 入る/出る を検知し、アプリやソフトウェアで何かのアクションを実行することです。 これを利用することで、例えば配送車が倉庫の近くに来たタイミングで倉庫管理者に通知が飛んで受け入れ作業を効率的に行える、など様々な形で応用できます。\n  (gif は Tile38 https://github.com/tidwall/tile38 より)\n弊社では地点情報は PostGIS に store し、 Geofencing は自作をしていますが、Tile38 というOSSのライブラリは In-memory GeoDatabase \u0026 Geofencing の機能が提供されていたので、試しに使ってみて、どうやって実装しているのかソースコードを簡単に読んでみました。\n使用した Tile38 のバージョンは v1.21.1 です。\nHow to use Dockerで tile38 サーバーを実行できます。\n$ docker pull tile38/tile38 $ docker run -p 9851:9851 tile38/tile38 tile38 に繋ぐ cli クライアントは tile38-cli で接続できます。Dockerでは -net=host で ネットワークを共有する必要があります。\n$ docker run --net=host -it tile38/tile38 tile38-cli 127.0.0.1:9851 SET fleet truck1 POINT 33.5123 -112.2693 {\"ok\":true,\"elapsed\":\"617.7µs\"} 127.0.0.1:9851 GET fleet truck1 {\"ok\":true,\"object\":{\"type\":\"Point\",\"coordinates\":[-112.2693,33.5123]},\"elapsed\":\"58.9µs\"} ↑では lat/lon でポイントを登録しましたが、この他に bbox、Geohash、GeoJSON などの型にも対応してます。\nまた通信手段は cli だけでなく、HTTP、Websockets、Telnet、RESPにも対応してます。\nGeofence のエリア登録は SETCHAN コマンド、pubsub チャンネルへのサブスクライブは SUBSCRIBE コマンドでできます。\n127.0.0.1:9851 SETCHAN warehouse NEARBY fleet FENCE POINT 33.462 -112.268 6000 {\"ok\":true,\"elapsed\":\"93.5µs\"} 127.0.0.1:9851 SUBSCRIBE warehouse {\"ok\":true,\"command\":\"subscribe\",\"channel\":\"warehouse\",\"num\":1,\"elapsed\":\"38µs\"} SUBSCRIBE コマンドを打つとコネクションが開き続け、別ターミナルでエリア範囲内にポイントを作成すると Geofence 通知が行われます。\n127.0.0.1:9851 SET fleet bus POINT 33.460 -112.260 {\"ok\":true,\"elapsed\":\"72.5µs\"} 127.0.0.1:9851 SUBSCRIBE warehouse {\"ok\":true,\"command\":\"subscribe\",\"channel\":\"warehouse\",\"num\":1,\"elapsed\":\"38µs\"} {\"command\":\"set\",\"group\":\"60fd249e09ac72000119ddf9\",\"detect\":\"enter\",\"hook\":\"warehouse\",\"key\":\"fleet\",\"time\":\"2020-07-07T08:45:18.6552167Z\",\"id\":\"bus\",\"object\":{\"type\":\"Point\",\"coordinates\":[-112.26,33.46]}} {\"command\":\"set\",\"group\":\"60fd249e09ac72000119ddf9\",\"detect\":\"inside\",\"hook\":\"warehouse\",\"key\":\"fleet\",\"time\":\"2020-07-07T08:45:18.6552167Z\",\"id\":\"bus\",\"object\":{\"type\":\"Point\",\"coordinates\":[-112.26,33.46]}} detect には inside, outside, enter, exit, cross の値が入ります。\ninside, outside は 出入りの状態、enter, exit は状態が変化した際のみなので、再びエリア範囲内にポイントを作成すると\n{\"command\":\"set\",\"group\":\"60fd249e09ac72000119ddf9\",\"detect\":\"inside\",\"hook\":\"warehouse\",\"key\":\"fleet\",\"time\":\"2020-07-07T09:00:35.680187Z\",\"id\":\"bus\",\"object\":{\"type\":\"Point\",\"coordinates\":[-112.26,33.46]}} 範囲外にポイントを作成すると\n{\"command\":\"set\",\"group\":\"60fd249e09ac72000119ddf9\",\"detect\":\"exit\",\"hook\":\"warehouse\",\"key\":\"fleet\",\"time\":\"2020-07-07T09:00:48.7539999Z\",\"id\":\"bus\",\"object\":{\"type\":\"Point\",\"coordinates\":[-11,33.46]}} {\"command\":\"set\",\"group\":\"60fd249e09ac72000119ddf9\",\"detect\":\"outside\",\"hook\":\"warehouse\",\"key\":\"fleet\",\"time\":\"2020-07-07T09:00:48.7539999Z\",\"id\":\"bus\",\"object\":{\"type\":\"Point\",\"coordinates\":[-11,33.46]}} と出力されます。Webhook も対応しています。便利。\nR-tree spatial index どうやって実装しているのかソースコードを追っていくと、同じ作者が作った tidwall/rtree に行き着きました。これを使って特定のエリア内にポイント=ノードが入っているか等の検索をしています。\nB-tree はRDBのindexでもおなじみで概要も知ってる一方、 R-tree は初見でした。README に R-tree の実装はこの論文を参考に作ったよと載っていたので、その論文を中心に色々調べてみました。\n Guttman, Antonin. R-trees: a dynamic index structure for spatial searching Wikipedia - R木 PostGIS Reference - Spatial indexing  geo データ や CAD 等において空間内にある大きさを持ったノードの検索がよく使われますが、従来の index 方法ではこれに適したものがありませんでした。 index がないと全てのノードに対して距離を計算する必要があり、非常に効率が悪いです。\nR-tree は階層的に入れ子になった、相互に重なり合う 最小外接矩形 (Minimum Bounding Rectangle: MBR) で空間を分割します。\n  (Wikipedia - R木 より)\n近くのノード同士を囲った最小外接矩形によって区画に分けます。葉ノード以外の内部ノードの各エントリには外接矩形と子ノードへのポインタがあり、葉ノードのエントリは空間オブジェクトの矩形があります。\nこのヒエラルキーを根からスタートし、それぞれのノードにある矩形について探索矩形と重なるかどうか判断していきます。重なるならその対応する子ノードについても探索を行い、これを再起的に行うことで全ての重なりを持つノードが探索されます。 例えば上の画像で R8 内にある点を検索したいとき以下の順序で探索されます。\n 根ノードの要素を探索 → R1がマッチ R1の要素を探索 → R3がマッチ R3の要素を探索 → R8がマッチ R8は葉ノードなのでR8の持つデータを取得して探索終了  点ではなく範囲検索をする場合も同じで、例えばR9, R10, R11の一部を含んだ矩形と重なる場合には\n 根ノードの要素を探索 → R1がマッチ R1の要素を探索 → R3, R4がマッチ R3の要素を探索 → R9, R10がマッチ R9, R10は葉ノードなのでR9, R10の持つデータを取得 2よりR4の要素を探索 → R11がマッチ R11は葉ノードなのでR11の持つデータを取得して探索終了  挿入では外接矩形を使って近い要素が同じ葉ノードに属するようにします。所属すべき近接する葉ノードを探索し、空きがあれば挿入、空きがなければノードを分割してから挿入します。\nノードの分割アルゴリズムについて、論文には以下が紹介されていました。\n Exhaustive Algorithm A Quadratic-Cost Algorithm A Linear-Cost Algollthm  各アルゴリズムについては はてなブログ - 空間インデックス(R-tree)入門 ノードの分割 にわかりやすくまとめられています。\nTile38 の中で使われている R-tree の実装 tidwall/rtree では分割アルゴリズムは独自のものを開発しており、コードでは splitLargestAxisEdgeSnap() という関数で行われます。\nREADME にも書かれていますが、tidwall/rtree では子ノードがメモリ内で移動する確率を 50/50 にするために、各子ノードに対して単純な距離計算を行います。 各子ノードに対し、親の最小値から子の最小値までの距離を minDist 親の最大値から子の最大値までの距離を maxDist としてそれぞれ算出し、minDist の場合は左のままに、minDist  maxDist の場合は右に移動、等しい場合は全ての子ノードが評価された後に少ない方に配置されます。\n","wordCount":"274","inLanguage":"en","datePublished":"2020-07-08T00:00:00Z","dateModified":"2020-07-08T00:00:00Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://nito95.github.io/posts/2020-07-08/"},"publisher":{"@type":"Organization","name":"nito95 blog","logo":{"@type":"ImageObject","url":"https://nito95.github.io/%3Clink%20/%20abs%20url%3E"}}}</script>
-</head>
-<body id=top>
-<script>localStorage.getItem("pref-theme")==="dark"&&document.body.classList.add('dark')</script>
-<noscript>
-<style type=text/css>#theme-toggle,.top-link{display:none}</style>
-</noscript>
-<header class=header>
-<nav class=nav>
-<div class=logo>
-<a href=https://nito95.github.io/ accesskey=h title="nito95 blog (Alt + H)">nito95 blog</a>
-<span class=logo-switches>
-<button id=theme-toggle accesskey=t title="(Alt + T)"><svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-</button>
-</span>
-</div>
-<ul id=menu>
-<li>
-<a href=https://nito95.github.io/about/ title=About>
-<span>About</span>
-</a>
-</li>
-</ul>
-</nav>
-</header>
-<main class=main>
-<article class=post-single>
-<header class=post-header>
-<h1 class=post-title>
-Tile38 による Geofencing と R-tree
-</h1>
-<div class=post-meta>July 8, 2020
-</div>
-</header>
-<div class=post-content><p>現在働いている <a href=https://smartdrive.co.jp/>スマートドライブ</a> では Geofencing の機能を使ったソリューションを提供しています。</p>
-<p>Geofencing とは、あるオブジェクトが特定のエリアに 入る/出る を検知し、アプリやソフトウェアで何かのアクションを実行することです。
-これを利用することで、例えば配送車が倉庫の近くに来たタイミングで倉庫管理者に通知が飛んで受け入れ作業を効率的に行える、など様々な形で応用できます。</p>
-<p><figure>
-<img loading=lazy src=https://daimoku-pro-staging.s3.ap-northeast-1.amazonaws.com/uploads/tmp/1611880836-315936928465457-0005-6146/2020-07-08-1.gif width=320>
-</figure>
-(gif は Tile38 <a href=https://github.com/tidwall/tile38>https://github.com/tidwall/tile38</a> より)</p>
-<p>弊社では地点情報は <a href=https://postgis.net/>PostGIS</a> に store し、 Geofencing は自作をしていますが、<a href=https://github.com/tidwall/tile38>Tile38</a> というOSSのライブラリは In-memory GeoDatabase & Geofencing の機能が提供されていたので、試しに使ってみて、どうやって実装しているのかソースコードを簡単に読んでみました。</p>
-<p>使用した Tile38 のバージョンは <a href=https://github.com/tidwall/tile38/tree/1.21.1>v1.21.1</a> です。</p>
-<h2 id=how-to-use>How to use<a hidden class=anchor aria-hidden=true href=#how-to-use>#</a></h2>
-<p>Dockerで tile38 サーバーを実行できます。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-txt data-lang=txt>$ docker pull tile38/tile38
-$ docker run -p 9851:9851 tile38/tile38
-</code></pre></div><p>tile38 に繋ぐ cli クライアントは <code>tile38-cli</code> で接続できます。Dockerでは <code>-net=host</code> で ネットワークを共有する必要があります。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-txt data-lang=txt>$ docker run --net=host -it tile38/tile38 tile38-cli
-
-127.0.0.1:9851&gt; SET fleet truck1 POINT 33.5123 -112.2693
-{&#34;ok&#34;:true,&#34;elapsed&#34;:&#34;617.7µs&#34;}
-127.0.0.1:9851&gt; GET fleet truck1
-{&#34;ok&#34;:true,&#34;object&#34;:{&#34;type&#34;:&#34;Point&#34;,&#34;coordinates&#34;:[-112.2693,33.5123]},&#34;elapsed&#34;:&#34;58.9µs&#34;}
-</code></pre></div><p>↑では lat/lon でポイントを登録しましたが、この他に bbox、Geohash、GeoJSON などの型にも対応してます。</p>
-<p>また通信手段は cli だけでなく、HTTP、Websockets、Telnet、RESPにも対応してます。</p>
-<p>Geofence のエリア登録は <code>SETCHAN</code> コマンド、pubsub チャンネルへのサブスクライブは <code>SUBSCRIBE</code> コマンドでできます。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-txt data-lang=txt>127.0.0.1:9851&gt; SETCHAN warehouse NEARBY fleet FENCE POINT 33.462 -112.268 6000
-{&#34;ok&#34;:true,&#34;elapsed&#34;:&#34;93.5µs&#34;}
-127.0.0.1:9851&gt; SUBSCRIBE warehouse
-{&#34;ok&#34;:true,&#34;command&#34;:&#34;subscribe&#34;,&#34;channel&#34;:&#34;warehouse&#34;,&#34;num&#34;:1,&#34;elapsed&#34;:&#34;38µs&#34;}
-</code></pre></div><p><code>SUBSCRIBE</code> コマンドを打つとコネクションが開き続け、別ターミナルでエリア範囲内にポイントを作成すると Geofence 通知が行われます。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-txt data-lang=txt>127.0.0.1:9851&gt; SET fleet bus POINT 33.460 -112.260
-{&#34;ok&#34;:true,&#34;elapsed&#34;:&#34;72.5µs&#34;}
-</code></pre></div><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-txt data-lang=txt>127.0.0.1:9851&gt; SUBSCRIBE warehouse
-{&#34;ok&#34;:true,&#34;command&#34;:&#34;subscribe&#34;,&#34;channel&#34;:&#34;warehouse&#34;,&#34;num&#34;:1,&#34;elapsed&#34;:&#34;38µs&#34;}
-
-{&#34;command&#34;:&#34;set&#34;,&#34;group&#34;:&#34;60fd249e09ac72000119ddf9&#34;,&#34;detect&#34;:&#34;enter&#34;,&#34;hook&#34;:&#34;warehouse&#34;,&#34;key&#34;:&#34;fleet&#34;,&#34;time&#34;:&#34;2020-07-07T08:45:18.6552167Z&#34;,&#34;id&#34;:&#34;bus&#34;,&#34;object&#34;:{&#34;type&#34;:&#34;Point&#34;,&#34;coordinates&#34;:[-112.26,33.46]}}
-{&#34;command&#34;:&#34;set&#34;,&#34;group&#34;:&#34;60fd249e09ac72000119ddf9&#34;,&#34;detect&#34;:&#34;inside&#34;,&#34;hook&#34;:&#34;warehouse&#34;,&#34;key&#34;:&#34;fleet&#34;,&#34;time&#34;:&#34;2020-07-07T08:45:18.6552167Z&#34;,&#34;id&#34;:&#34;bus&#34;,&#34;object&#34;:{&#34;type&#34;:&#34;Point&#34;,&#34;coordinates&#34;:[-112.26,33.46]}}
-</code></pre></div><p><code>detect</code> には <code>inside</code>, <code>outside</code>, <code>enter</code>, <code>exit</code>, <code>cross</code> の値が入ります。</p>
-<p><code>inside</code>, <code>outside</code> は 出入りの状態、<code>enter</code>, <code>exit</code> は状態が変化した際のみなので、再びエリア範囲内にポイントを作成すると</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-txt data-lang=txt>{&#34;command&#34;:&#34;set&#34;,&#34;group&#34;:&#34;60fd249e09ac72000119ddf9&#34;,&#34;detect&#34;:&#34;inside&#34;,&#34;hook&#34;:&#34;warehouse&#34;,&#34;key&#34;:&#34;fleet&#34;,&#34;time&#34;:&#34;2020-07-07T09:00:35.680187Z&#34;,&#34;id&#34;:&#34;bus&#34;,&#34;object&#34;:{&#34;type&#34;:&#34;Point&#34;,&#34;coordinates&#34;:[-112.26,33.46]}}
-</code></pre></div><p>範囲外にポイントを作成すると</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-txt data-lang=txt>{&#34;command&#34;:&#34;set&#34;,&#34;group&#34;:&#34;60fd249e09ac72000119ddf9&#34;,&#34;detect&#34;:&#34;exit&#34;,&#34;hook&#34;:&#34;warehouse&#34;,&#34;key&#34;:&#34;fleet&#34;,&#34;time&#34;:&#34;2020-07-07T09:00:48.7539999Z&#34;,&#34;id&#34;:&#34;bus&#34;,&#34;object&#34;:{&#34;type&#34;:&#34;Point&#34;,&#34;coordinates&#34;:[-11,33.46]}}
-{&#34;command&#34;:&#34;set&#34;,&#34;group&#34;:&#34;60fd249e09ac72000119ddf9&#34;,&#34;detect&#34;:&#34;outside&#34;,&#34;hook&#34;:&#34;warehouse&#34;,&#34;key&#34;:&#34;fleet&#34;,&#34;time&#34;:&#34;2020-07-07T09:00:48.7539999Z&#34;,&#34;id&#34;:&#34;bus&#34;,&#34;object&#34;:{&#34;type&#34;:&#34;Point&#34;,&#34;coordinates&#34;:[-11,33.46]}}
-</code></pre></div><p>と出力されます。Webhook も対応しています。便利。</p>
-<h2 id=r-tree-spatial-index>R-tree spatial index<a hidden class=anchor aria-hidden=true href=#r-tree-spatial-index>#</a></h2>
-<p>どうやって実装しているのかソースコードを追っていくと、同じ作者が作った <a href=https://github.com/tidwall/rtree>tidwall/rtree</a> に行き着きました。これを使って特定のエリア内にポイント=ノードが入っているか等の検索をしています。</p>
-<p>B-tree はRDBのindexでもおなじみで概要も知ってる一方、 R-tree は初見でした。README に R-tree の実装はこの論文を参考に作ったよと載っていたので、その論文を中心に色々調べてみました。</p>
-<ul>
-<li><a href=http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf>Guttman, Antonin. R-trees: a dynamic index structure for spatial searching</a></li>
-<li><a href=https://ja.wikipedia.org/wiki/R%E6%9C%A8>Wikipedia - R木</a></li>
-<li><a href=http://postgis.net/workshops/postgis-intro/indexing.html>PostGIS Reference - Spatial indexing</a></li>
-</ul>
-<p>geo データ や CAD 等において空間内にある大きさを持ったノードの検索がよく使われますが、従来の index 方法ではこれに適したものがありませんでした。
-index がないと全てのノードに対して距離を計算する必要があり、非常に効率が悪いです。</p>
-<p>R-tree は階層的に入れ子になった、相互に重なり合う <strong>最小外接矩形 (Minimum Bounding Rectangle: MBR)</strong> で空間を分割します。</p>
-<p><figure>
-<img loading=lazy src=/images/2020-07-08-1.png>
-</figure>
-(<a href=https://ja.wikipedia.org/wiki/R%E6%9C%A8>Wikipedia - R木</a> より)</p>
-<p>近くのノード同士を囲った最小外接矩形によって区画に分けます。葉ノード以外の内部ノードの各エントリには外接矩形と子ノードへのポインタがあり、葉ノードのエントリは空間オブジェクトの矩形があります。</p>
-<p>このヒエラルキーを根からスタートし、それぞれのノードにある矩形について探索矩形と重なるかどうか判断していきます。重なるならその対応する子ノードについても探索を行い、これを再起的に行うことで全ての重なりを持つノードが探索されます。
-例えば上の画像で R8 内にある点を検索したいとき以下の順序で探索されます。</p>
-<ol>
-<li>根ノードの要素を探索 → R1がマッチ</li>
-<li>R1の要素を探索 → R3がマッチ</li>
-<li>R3の要素を探索 → R8がマッチ</li>
-<li>R8は葉ノードなのでR8の持つデータを取得して探索終了</li>
-</ol>
-<p>点ではなく範囲検索をする場合も同じで、例えばR9, R10, R11の一部を含んだ矩形と重なる場合には</p>
-<ol>
-<li>根ノードの要素を探索 → R1がマッチ</li>
-<li>R1の要素を探索 → R3, R4がマッチ</li>
-<li>R3の要素を探索 → R9, R10がマッチ</li>
-<li>R9, R10は葉ノードなのでR9, R10の持つデータを取得</li>
-<li>2よりR4の要素を探索 → R11がマッチ</li>
-<li>R11は葉ノードなのでR11の持つデータを取得して探索終了</li>
-</ol>
-<p>挿入では外接矩形を使って近い要素が同じ葉ノードに属するようにします。所属すべき近接する葉ノードを探索し、空きがあれば挿入、空きがなければノードを分割してから挿入します。</p>
-<p>ノードの分割アルゴリズムについて、論文には以下が紹介されていました。</p>
-<ul>
-<li>Exhaustive Algorithm</li>
-<li>A Quadratic-Cost Algorithm</li>
-<li>A Linear-Cost Algollthm</li>
-</ul>
-<p>各アルゴリズムについては <a href=https://tanishiking24.hatenablog.com/entry/introduction_rtree_index#%E3%83%8E%E3%83%BC%E3%83%89%E3%81%AE%E5%88%86%E5%89%B2>はてなブログ - 空間インデックス(R-tree)入門 ノードの分割</a> にわかりやすくまとめられています。</p>
-<p>Tile38 の中で使われている R-tree の実装 <a href=https://github.com/tidwall/rtree>tidwall/rtree</a> では分割アルゴリズムは独自のものを開発しており、コードでは <code>splitLargestAxisEdgeSnap()</code> という関数で行われます。</p>
-<p>README にも書かれていますが、<a href=https://github.com/tidwall/rtree>tidwall/rtree</a> では子ノードがメモリ内で移動する確率を 50/50 にするために、各子ノードに対して単純な距離計算を行います。
-各子ノードに対し、親の最小値から子の最小値までの距離を <code>minDist</code> 親の最大値から子の最大値までの距離を <code>maxDist</code> としてそれぞれ算出し、<code>minDist &lt; maxDist</code> の場合は左のままに、<code>minDist > maxDist</code> の場合は右に移動、等しい場合は全ての子ノードが評価された後に少ない方に配置されます。</p>
-</div>
-<footer class=post-footer>
-<nav class=paginav>
-<a class=prev href=https://nito95.github.io/posts/2020-11-24/>
-<span class=title>« Prev Page</span>
-<br>
-<span>AWS CDK (TS) で prod/staging 環境を分けて Fargate 構築</span>
-</a>
-<a class=next href=https://nito95.github.io/posts/2020-04-10/>
-<span class=title>Next Page »</span>
-<br>
-<span>CでTCPソケットプログラミング</span>
-</a>
-</nav>
-</footer>
-</article>
-</main>
-<footer class=footer>
-<span>&copy; 2021 <a href=https://nito95.github.io/>nito95 blog</a></span>
-<span>
-Powered by
+$ docker run --net=host -it tile38/tile38 tile38-cli 127.0.0.1:9851> SET fleet truck1 POINT 33."><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://nito95.github.io/posts/"},{"@type":"ListItem","position":2,"name":"Tile38 による Geofencing と R-tree","item":"https://nito95.github.io/posts/2020-07-08/"}]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"Tile38 による Geofencing と R-tree","name":"Tile38 による Geofencing と R-tree","description":"現在働いている スマートドライブ では Geofencing \u0008の機能を使ったソリューションを提供しています。\nGeofencing とは、あるオブジェクトが特定のエリアに 入る/出る を検知し、アプリやソフトウェアで何かのアクションを実行することです。 これを利用することで、例えば配送車が倉庫の近くに来たタイミングで倉庫管理者に通知が飛んで受け入れ作業を効率的に行える、など様々な形で応用できます。\n(gif は Tile38 https://github.com/tidwall/tile38 より)\n弊社では地点情報は PostGIS に store し、 Geofencing は自作をしていますが、Tile38 というOSSのライブラリは In-memory GeoDatabase \u0026amp; Geofencing の機能が提供されていたので、試しに使ってみて、どうやって実装しているのかソースコードを簡単に読んでみました。\n使用した Tile38 のバージョンは v1.21.1 です。\nHow to use Dockerで tile38 サーバーを実行できます。\n$ docker pull tile38/tile38 $ docker run -p 9851:9851 tile38/tile38 tile38 に繋ぐ cli クライアントは tile38-cli で接続できます。Dockerでは -net=host で ネットワークを共有する必要があります。\n$ docker run --net=host -it tile38/tile38 tile38-cli 127.0.0.1:9851\u0026gt; SET fleet truck1 POINT 33.","keywords":[],"articleBody":"現在働いている スマートドライブ では Geofencing \u0008の機能を使ったソリューションを提供しています。\nGeofencing とは、あるオブジェクトが特定のエリアに 入る/出る を検知し、アプリやソフトウェアで何かのアクションを実行することです。 これを利用することで、例えば配送車が倉庫の近くに来たタイミングで倉庫管理者に通知が飛んで受け入れ作業を効率的に行える、など様々な形で応用できます。\n(gif は Tile38 https://github.com/tidwall/tile38 より)\n弊社では地点情報は PostGIS に store し、 Geofencing は自作をしていますが、Tile38 というOSSのライブラリは In-memory GeoDatabase \u0026 Geofencing の機能が提供されていたので、試しに使ってみて、どうやって実装しているのかソースコードを簡単に読んでみました。\n使用した Tile38 のバージョンは v1.21.1 です。\nHow to use Dockerで tile38 サーバーを実行できます。\n$ docker pull tile38/tile38 $ docker run -p 9851:9851 tile38/tile38 tile38 に繋ぐ cli クライアントは tile38-cli で接続できます。Dockerでは -net=host で ネットワークを共有する必要があります。\n$ docker run --net=host -it tile38/tile38 tile38-cli 127.0.0.1:9851\u003e SET fleet truck1 POINT 33.5123 -112.2693 {\"ok\":true,\"elapsed\":\"617.7µs\"} 127.0.0.1:9851\u003e GET fleet truck1 {\"ok\":true,\"object\":{\"type\":\"Point\",\"coordinates\":[-112.2693,33.5123]},\"elapsed\":\"58.9µs\"} ↑では lat/lon でポイントを登録しましたが、この他に bbox、Geohash、GeoJSON などの型にも対応してます。\nまた通信手段は cli だけでなく、HTTP、Websockets、Telnet、RESPにも対応してます。\nGeofence のエリア登録は SETCHAN コマンド、pubsub チャンネルへのサブスクライブは SUBSCRIBE コマンドでできます。\n127.0.0.1:9851\u003e SETCHAN warehouse NEARBY fleet FENCE POINT 33.462 -112.268 6000 {\"ok\":true,\"elapsed\":\"93.5µs\"} 127.0.0.1:9851\u003e SUBSCRIBE warehouse {\"ok\":true,\"command\":\"subscribe\",\"channel\":\"warehouse\",\"num\":1,\"elapsed\":\"38µs\"} SUBSCRIBE コマンドを打つとコネクションが開き続け、別ターミナルでエリア範囲内にポイントを作成すると Geofence 通知が行われます。\n127.0.0.1:9851\u003e SET fleet bus POINT 33.460 -112.260 {\"ok\":true,\"elapsed\":\"72.5µs\"} 127.0.0.1:9851\u003e SUBSCRIBE warehouse {\"ok\":true,\"command\":\"subscribe\",\"channel\":\"warehouse\",\"num\":1,\"elapsed\":\"38µs\"} {\"command\":\"set\",\"group\":\"60fd249e09ac72000119ddf9\",\"detect\":\"enter\",\"hook\":\"warehouse\",\"key\":\"fleet\",\"time\":\"2020-07-07T08:45:18.6552167Z\",\"id\":\"bus\",\"object\":{\"type\":\"Point\",\"coordinates\":[-112.26,33.46]}} {\"command\":\"set\",\"group\":\"60fd249e09ac72000119ddf9\",\"detect\":\"inside\",\"hook\":\"warehouse\",\"key\":\"fleet\",\"time\":\"2020-07-07T08:45:18.6552167Z\",\"id\":\"bus\",\"object\":{\"type\":\"Point\",\"coordinates\":[-112.26,33.46]}} detect には inside, outside, enter, exit, cross の値が入ります。\ninside, outside は 出入りの状態、enter, exit は状態が変化した際のみなので、再びエリア範囲内にポイントを作成すると\n{\"command\":\"set\",\"group\":\"60fd249e09ac72000119ddf9\",\"detect\":\"inside\",\"hook\":\"warehouse\",\"key\":\"fleet\",\"time\":\"2020-07-07T09:00:35.680187Z\",\"id\":\"bus\",\"object\":{\"type\":\"Point\",\"coordinates\":[-112.26,33.46]}} 範囲外にポイントを作成すると\n{\"command\":\"set\",\"group\":\"60fd249e09ac72000119ddf9\",\"detect\":\"exit\",\"hook\":\"warehouse\",\"key\":\"fleet\",\"time\":\"2020-07-07T09:00:48.7539999Z\",\"id\":\"bus\",\"object\":{\"type\":\"Point\",\"coordinates\":[-11,33.46]}} {\"command\":\"set\",\"group\":\"60fd249e09ac72000119ddf9\",\"detect\":\"outside\",\"hook\":\"warehouse\",\"key\":\"fleet\",\"time\":\"2020-07-07T09:00:48.7539999Z\",\"id\":\"bus\",\"object\":{\"type\":\"Point\",\"coordinates\":[-11,33.46]}} と出力されます。Webhook も対応しています。便利。\nR-tree spatial index どうやって実装しているのかソースコードを追っていくと、同じ作者が作った tidwall/rtree に行き着きました。これを使って特定のエリア内にポイント=ノードが入っているか等の検索をしています。\nB-tree はRDBのindexでもおなじみで概要も知ってる一方、 R-tree は初見でした。README に R-tree の実装はこの論文を参考に作ったよと載っていたので、その論文を中心に色々調べてみました。\nGuttman, Antonin. R-trees: a dynamic index structure for spatial searching Wikipedia - R木 PostGIS Reference - Spatial indexing geo データ や CAD 等において空間内にある大きさを持ったノードの検索がよく使われますが、従来の index 方法ではこれに適したものがありませんでした。 index がないと全てのノードに対して距離を計算する必要があり、非常に効率が悪いです。\nR-tree は階層的に入れ子になった、相互に重なり合う 最小外接矩形 (Minimum Bounding Rectangle: MBR) で空間を分割します。\n(Wikipedia - R木 より)\n近くのノード同士を囲った最小外接矩形によって区画に分けます。葉ノード以外の内部ノードの各エントリには外接矩形と子ノードへのポインタがあり、葉ノードのエントリは空間オブジェクトの矩形があります。\nこのヒエラルキーを根からスタートし、それぞれのノードにある矩形について探索矩形と重なるかどうか判断していきます。重なるならその対応する子ノードについても探索を行い、これを再起的に行うことで全ての重なりを持つノードが探索されます。 例えば上の画像で R8 内にある点を検索したいとき以下の順序で探索されます。\n根ノードの要素を探索 → R1がマッチ R1の要素を探索 → R3がマッチ R3の要素を探索 → R8がマッチ R8は葉ノードなのでR8の持つデータを取得して探索終了 点ではなく範囲検索をする場合も同じで、例えばR9, R10, R11の一部を含んだ矩形と重なる場合には\n根ノードの要素を探索 → R1がマッチ R1の要素を探索 → R3, R4がマッチ R3の要素を探索 → R9, R10がマッチ R9, R10は葉ノードなのでR9, R10の持つデータを取得 2よりR4の要素を探索 → R11がマッチ R11は葉ノードなのでR11の持つデータを取得して探索終了 挿入では外接矩形を使って近い要素が同じ葉ノードに属するようにします。所属すべき近接する葉ノードを探索し、空きがあれば挿入、空きがなければノードを分割してから挿入します。\nノードの分割アルゴリズムについて、論文には以下が紹介されていました。\nExhaustive Algorithm A Quadratic-Cost Algorithm A Linear-Cost Algollthm 各アルゴリズムについては はてなブログ - 空間インデックス(R-tree)入門 ノードの分割 にわかりやすくまとめられています。\nTile38 の中で使われている R-tree の実装 tidwall/rtree では分割アルゴリズムは独自のものを開発しており、コードでは splitLargestAxisEdgeSnap() という関数で行われます。\nREADME にも書かれていますが、tidwall/rtree では子ノードがメモリ内で移動する確率を 50/50 にするために、各子ノードに対して単純な距離計算を行います。 各子ノードに対し、親の最小値から子の最小値までの距離を minDist 親の最大値から子の最大値までの距離を maxDist としてそれぞれ算出し、minDist \u003c maxDist の場合は左のままに、minDist \u003e maxDist の場合は右に移動、等しい場合は全ての子ノードが評価された後に少ない方に配置されます。\n","wordCount":"274","inLanguage":"en","datePublished":"2020-07-08T00:00:00Z","dateModified":"2020-07-08T00:00:00Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://nito95.github.io/posts/2020-07-08/"},"publisher":{"@type":"Organization","name":"nito95 blog","logo":{"@type":"ImageObject","url":"https://nito95.github.io/%3Clink%20/%20abs%20url%3E"}}}</script></head><body id=top><script>localStorage.getItem("pref-theme")==="dark"&&document.body.classList.add("dark")</script><noscript><style type=text/css>#theme-toggle,.top-link{display:none}</style></noscript><header class=header><nav class=nav><div class=logo><a href=https://nito95.github.io/ accesskey=h title="nito95 blog (Alt + H)">nito95 blog</a>
+<span class=logo-switches><button id=theme-toggle accesskey=t title="(Alt + T)"><svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></button></span></div><ul id=menu><li><a href=https://nito95.github.io/about/ title=About><span>About</span></a></li></ul></nav></header><main class=main><article class=post-single><header class=post-header><h1 class=post-title>Tile38 による Geofencing と R-tree</h1><div class=post-meta>July 8, 2020</div></header><div class=post-content><p>現在働いている <a href=https://smartdrive.co.jp/>スマートドライブ</a> では Geofencing の機能を使ったソリューションを提供しています。</p><p>Geofencing とは、あるオブジェクトが特定のエリアに 入る/出る を検知し、アプリやソフトウェアで何かのアクションを実行することです。
+これを利用することで、例えば配送車が倉庫の近くに来たタイミングで倉庫管理者に通知が飛んで受け入れ作業を効率的に行える、など様々な形で応用できます。</p><p><figure><img loading=lazy src=https://daimoku-pro-staging.s3.ap-northeast-1.amazonaws.com/uploads/tmp/1611880836-315936928465457-0005-6146/2020-07-08-1.gif width=320></figure>(gif は Tile38 <a href=https://github.com/tidwall/tile38>https://github.com/tidwall/tile38</a> より)</p><p>弊社では地点情報は <a href=https://postgis.net/>PostGIS</a> に store し、 Geofencing は自作をしていますが、<a href=https://github.com/tidwall/tile38>Tile38</a> というOSSのライブラリは In-memory GeoDatabase & Geofencing の機能が提供されていたので、試しに使ってみて、どうやって実装しているのかソースコードを簡単に読んでみました。</p><p>使用した Tile38 のバージョンは <a href=https://github.com/tidwall/tile38/tree/1.21.1>v1.21.1</a> です。</p><h2 id=how-to-use>How to use<a hidden class=anchor aria-hidden=true href=#how-to-use>#</a></h2><p>Dockerで tile38 サーバーを実行できます。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-txt data-lang=txt><span style=display:flex><span>$ docker pull tile38/tile38
+</span></span><span style=display:flex><span>$ docker run -p 9851:9851 tile38/tile38
+</span></span></code></pre></div><p>tile38 に繋ぐ cli クライアントは <code>tile38-cli</code> で接続できます。Dockerでは <code>-net=host</code> で ネットワークを共有する必要があります。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-txt data-lang=txt><span style=display:flex><span>$ docker run --net=host -it tile38/tile38 tile38-cli
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>127.0.0.1:9851&gt; SET fleet truck1 POINT 33.5123 -112.2693
+</span></span><span style=display:flex><span>{&#34;ok&#34;:true,&#34;elapsed&#34;:&#34;617.7µs&#34;}
+</span></span><span style=display:flex><span>127.0.0.1:9851&gt; GET fleet truck1
+</span></span><span style=display:flex><span>{&#34;ok&#34;:true,&#34;object&#34;:{&#34;type&#34;:&#34;Point&#34;,&#34;coordinates&#34;:[-112.2693,33.5123]},&#34;elapsed&#34;:&#34;58.9µs&#34;}
+</span></span></code></pre></div><p>↑では lat/lon でポイントを登録しましたが、この他に bbox、Geohash、GeoJSON などの型にも対応してます。</p><p>また通信手段は cli だけでなく、HTTP、Websockets、Telnet、RESPにも対応してます。</p><p>Geofence のエリア登録は <code>SETCHAN</code> コマンド、pubsub チャンネルへのサブスクライブは <code>SUBSCRIBE</code> コマンドでできます。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-txt data-lang=txt><span style=display:flex><span>127.0.0.1:9851&gt; SETCHAN warehouse NEARBY fleet FENCE POINT 33.462 -112.268 6000
+</span></span><span style=display:flex><span>{&#34;ok&#34;:true,&#34;elapsed&#34;:&#34;93.5µs&#34;}
+</span></span><span style=display:flex><span>127.0.0.1:9851&gt; SUBSCRIBE warehouse
+</span></span><span style=display:flex><span>{&#34;ok&#34;:true,&#34;command&#34;:&#34;subscribe&#34;,&#34;channel&#34;:&#34;warehouse&#34;,&#34;num&#34;:1,&#34;elapsed&#34;:&#34;38µs&#34;}
+</span></span></code></pre></div><p><code>SUBSCRIBE</code> コマンドを打つとコネクションが開き続け、別ターミナルでエリア範囲内にポイントを作成すると Geofence 通知が行われます。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-txt data-lang=txt><span style=display:flex><span>127.0.0.1:9851&gt; SET fleet bus POINT 33.460 -112.260
+</span></span><span style=display:flex><span>{&#34;ok&#34;:true,&#34;elapsed&#34;:&#34;72.5µs&#34;}
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-txt data-lang=txt><span style=display:flex><span>127.0.0.1:9851&gt; SUBSCRIBE warehouse
+</span></span><span style=display:flex><span>{&#34;ok&#34;:true,&#34;command&#34;:&#34;subscribe&#34;,&#34;channel&#34;:&#34;warehouse&#34;,&#34;num&#34;:1,&#34;elapsed&#34;:&#34;38µs&#34;}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>{&#34;command&#34;:&#34;set&#34;,&#34;group&#34;:&#34;60fd249e09ac72000119ddf9&#34;,&#34;detect&#34;:&#34;enter&#34;,&#34;hook&#34;:&#34;warehouse&#34;,&#34;key&#34;:&#34;fleet&#34;,&#34;time&#34;:&#34;2020-07-07T08:45:18.6552167Z&#34;,&#34;id&#34;:&#34;bus&#34;,&#34;object&#34;:{&#34;type&#34;:&#34;Point&#34;,&#34;coordinates&#34;:[-112.26,33.46]}}
+</span></span><span style=display:flex><span>{&#34;command&#34;:&#34;set&#34;,&#34;group&#34;:&#34;60fd249e09ac72000119ddf9&#34;,&#34;detect&#34;:&#34;inside&#34;,&#34;hook&#34;:&#34;warehouse&#34;,&#34;key&#34;:&#34;fleet&#34;,&#34;time&#34;:&#34;2020-07-07T08:45:18.6552167Z&#34;,&#34;id&#34;:&#34;bus&#34;,&#34;object&#34;:{&#34;type&#34;:&#34;Point&#34;,&#34;coordinates&#34;:[-112.26,33.46]}}
+</span></span></code></pre></div><p><code>detect</code> には <code>inside</code>, <code>outside</code>, <code>enter</code>, <code>exit</code>, <code>cross</code> の値が入ります。</p><p><code>inside</code>, <code>outside</code> は 出入りの状態、<code>enter</code>, <code>exit</code> は状態が変化した際のみなので、再びエリア範囲内にポイントを作成すると</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-txt data-lang=txt><span style=display:flex><span>{&#34;command&#34;:&#34;set&#34;,&#34;group&#34;:&#34;60fd249e09ac72000119ddf9&#34;,&#34;detect&#34;:&#34;inside&#34;,&#34;hook&#34;:&#34;warehouse&#34;,&#34;key&#34;:&#34;fleet&#34;,&#34;time&#34;:&#34;2020-07-07T09:00:35.680187Z&#34;,&#34;id&#34;:&#34;bus&#34;,&#34;object&#34;:{&#34;type&#34;:&#34;Point&#34;,&#34;coordinates&#34;:[-112.26,33.46]}}
+</span></span></code></pre></div><p>範囲外にポイントを作成すると</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-txt data-lang=txt><span style=display:flex><span>{&#34;command&#34;:&#34;set&#34;,&#34;group&#34;:&#34;60fd249e09ac72000119ddf9&#34;,&#34;detect&#34;:&#34;exit&#34;,&#34;hook&#34;:&#34;warehouse&#34;,&#34;key&#34;:&#34;fleet&#34;,&#34;time&#34;:&#34;2020-07-07T09:00:48.7539999Z&#34;,&#34;id&#34;:&#34;bus&#34;,&#34;object&#34;:{&#34;type&#34;:&#34;Point&#34;,&#34;coordinates&#34;:[-11,33.46]}}
+</span></span><span style=display:flex><span>{&#34;command&#34;:&#34;set&#34;,&#34;group&#34;:&#34;60fd249e09ac72000119ddf9&#34;,&#34;detect&#34;:&#34;outside&#34;,&#34;hook&#34;:&#34;warehouse&#34;,&#34;key&#34;:&#34;fleet&#34;,&#34;time&#34;:&#34;2020-07-07T09:00:48.7539999Z&#34;,&#34;id&#34;:&#34;bus&#34;,&#34;object&#34;:{&#34;type&#34;:&#34;Point&#34;,&#34;coordinates&#34;:[-11,33.46]}}
+</span></span></code></pre></div><p>と出力されます。Webhook も対応しています。便利。</p><h2 id=r-tree-spatial-index>R-tree spatial index<a hidden class=anchor aria-hidden=true href=#r-tree-spatial-index>#</a></h2><p>どうやって実装しているのかソースコードを追っていくと、同じ作者が作った <a href=https://github.com/tidwall/rtree>tidwall/rtree</a> に行き着きました。これを使って特定のエリア内にポイント=ノードが入っているか等の検索をしています。</p><p>B-tree はRDBのindexでもおなじみで概要も知ってる一方、 R-tree は初見でした。README に R-tree の実装はこの論文を参考に作ったよと載っていたので、その論文を中心に色々調べてみました。</p><ul><li><a href=http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf>Guttman, Antonin. R-trees: a dynamic index structure for spatial searching</a></li><li><a href=https://ja.wikipedia.org/wiki/R%E6%9C%A8>Wikipedia - R木</a></li><li><a href=http://postgis.net/workshops/postgis-intro/indexing.html>PostGIS Reference - Spatial indexing</a></li></ul><p>geo データ や CAD 等において空間内にある大きさを持ったノードの検索がよく使われますが、従来の index 方法ではこれに適したものがありませんでした。
+index がないと全てのノードに対して距離を計算する必要があり、非常に効率が悪いです。</p><p>R-tree は階層的に入れ子になった、相互に重なり合う <strong>最小外接矩形 (Minimum Bounding Rectangle: MBR)</strong> で空間を分割します。</p><p><figure><img loading=lazy src=/images/2020-07-08-1.png></figure>(<a href=https://ja.wikipedia.org/wiki/R%E6%9C%A8>Wikipedia - R木</a> より)</p><p>近くのノード同士を囲った最小外接矩形によって区画に分けます。葉ノード以外の内部ノードの各エントリには外接矩形と子ノードへのポインタがあり、葉ノードのエントリは空間オブジェクトの矩形があります。</p><p>このヒエラルキーを根からスタートし、それぞれのノードにある矩形について探索矩形と重なるかどうか判断していきます。重なるならその対応する子ノードについても探索を行い、これを再起的に行うことで全ての重なりを持つノードが探索されます。
+例えば上の画像で R8 内にある点を検索したいとき以下の順序で探索されます。</p><ol><li>根ノードの要素を探索 → R1がマッチ</li><li>R1の要素を探索 → R3がマッチ</li><li>R3の要素を探索 → R8がマッチ</li><li>R8は葉ノードなのでR8の持つデータを取得して探索終了</li></ol><p>点ではなく範囲検索をする場合も同じで、例えばR9, R10, R11の一部を含んだ矩形と重なる場合には</p><ol><li>根ノードの要素を探索 → R1がマッチ</li><li>R1の要素を探索 → R3, R4がマッチ</li><li>R3の要素を探索 → R9, R10がマッチ</li><li>R9, R10は葉ノードなのでR9, R10の持つデータを取得</li><li>2よりR4の要素を探索 → R11がマッチ</li><li>R11は葉ノードなのでR11の持つデータを取得して探索終了</li></ol><p>挿入では外接矩形を使って近い要素が同じ葉ノードに属するようにします。所属すべき近接する葉ノードを探索し、空きがあれば挿入、空きがなければノードを分割してから挿入します。</p><p>ノードの分割アルゴリズムについて、論文には以下が紹介されていました。</p><ul><li>Exhaustive Algorithm</li><li>A Quadratic-Cost Algorithm</li><li>A Linear-Cost Algollthm</li></ul><p>各アルゴリズムについては <a href=https://tanishiking24.hatenablog.com/entry/introduction_rtree_index#%E3%83%8E%E3%83%BC%E3%83%89%E3%81%AE%E5%88%86%E5%89%B2>はてなブログ - 空間インデックス(R-tree)入門 ノードの分割</a> にわかりやすくまとめられています。</p><p>Tile38 の中で使われている R-tree の実装 <a href=https://github.com/tidwall/rtree>tidwall/rtree</a> では分割アルゴリズムは独自のものを開発しており、コードでは <code>splitLargestAxisEdgeSnap()</code> という関数で行われます。</p><p>README にも書かれていますが、<a href=https://github.com/tidwall/rtree>tidwall/rtree</a> では子ノードがメモリ内で移動する確率を 50/50 にするために、各子ノードに対して単純な距離計算を行います。
+各子ノードに対し、親の最小値から子の最小値までの距離を <code>minDist</code> 親の最大値から子の最大値までの距離を <code>maxDist</code> としてそれぞれ算出し、<code>minDist &lt; maxDist</code> の場合は左のままに、<code>minDist > maxDist</code> の場合は右に移動、等しい場合は全ての子ノードが評価された後に少ない方に配置されます。</p></div><footer class=post-footer><nav class=paginav><a class=prev href=https://nito95.github.io/posts/2020-11-24/><span class=title>« Prev Page</span><br><span>AWS CDK (TS) で prod/staging 環境を分けて Fargate 構築</span></a>
+<a class=next href=https://nito95.github.io/posts/2020-04-10/><span class=title>Next Page »</span><br><span>CでTCPソケットプログラミング</span></a></nav></footer></article></main><footer class=footer><span>&copy; 2022 <a href=https://nito95.github.io/>nito95 blog</a></span>
+<span>Powered by
 <a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
-        <a href=https://git.io/hugopapermod rel=noopener target=_blank>PaperMod</a>
-</span>
-</footer>
-<a href=#top aria-label="go to top" title="Go to Top (Alt + G)">
-<button class=top-link id=top-link type=button accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
-</button>
-</a>
-<script>let menu=document.getElementById('menu');menu.scrollLeft=localStorage.getItem("menu-scroll-position"),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)},document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener("click",function(b){b.preventDefault();var a=this.getAttribute("href").substr(1);window.matchMedia('(prefers-reduced-motion: reduce)').matches?document.querySelector(`[id='${decodeURIComponent(a)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(a)}']`).scrollIntoView({behavior:"smooth"}),a==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${a}`)})})</script>
-<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
-<script>document.getElementById("theme-toggle").addEventListener("click",()=>{document.body.className.includes("dark")?(document.body.classList.remove('dark'),localStorage.setItem("pref-theme",'light')):(document.body.classList.add('dark'),localStorage.setItem("pref-theme",'dark'))})</script>
-</body>
-</html>
+        <a href=https://git.io/hugopapermod rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top aria-label="go to top" title="Go to Top (Alt + G)"><button class=top-link id=top-link type=button accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg></button></a>
+<script>let menu=document.getElementById("menu");menu.scrollLeft=localStorage.getItem("menu-scroll-position"),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)},document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(e){e.preventDefault();var t=this.getAttribute("href").substr(1);window.matchMedia("(prefers-reduced-motion: reduce)").matches?document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView({behavior:"smooth"}),t==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${t}`)})})</script><script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script><script>document.getElementById("theme-toggle").addEventListener("click",()=>{document.body.className.includes("dark")?(document.body.classList.remove("dark"),localStorage.setItem("pref-theme","light")):(document.body.classList.add("dark"),localStorage.setItem("pref-theme","dark"))})</script></body></html>

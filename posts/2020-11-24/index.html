@@ -1,11 +1,4 @@
-<!doctype html><html lang=en dir=auto>
-<head><meta charset=utf-8>
-<meta http-equiv=x-ua-compatible content="IE=edge">
-<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=robots content="index, follow">
-<title>AWS CDK (TS) で prod/staging 環境を分けて Fargate 構築 | nito95 blog</title>
-<meta name=keywords content>
-<meta name=description content="AWS CDK (TS) を使って prod/staging でスタック名を分けてFargateの環境構築をしてみました。
+<!doctype html><html lang=en dir=auto><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=robots content="index, follow"><title>AWS CDK (TS) で prod/staging 環境を分けて Fargate 構築 | nito95 blog</title><meta name=keywords content><meta name=description content="AWS CDK (TS) を使って prod/staging でスタック名を分けてFargateの環境構築をしてみました。
 デプロイするものは GET /health_check のみのエンドポイントを持つGo製のアプリです。
 コードは こちら
 AWS ECS Fargate とは ECSはコンテナ化されたアプリケーションを簡単にデプロイ、管理、スケーリングできるコンテナオーケストレーションサービスです。 Fargateはそのコンテナを実行する環境をサーバーレスにするサービスで、EC2インスタンスやそのスケーリングといった管理する必要がなくなります。
@@ -15,23 +8,8 @@ Cloud Formation はAWSのシステム構成をJSONで記述したものです。
 アプリ実装 アプリ自体は本質ではないので何でもよかったのですが、個人的な趣味でGo製にし、フレームワークとして Echo を使ってます。
 Fargateにデプロイするためにコンテナ化が必要なので、ローカル開発用の Dockerfile.local とデプロイ用の Dockerfile.prod の2つのDockerfileを用意します。 Dockerfile は [Qiita] Go 1.12 の開発環境と本番環境の Dockerfile を考える を参考にしています。
 次にローカル開発用にdocker-compose.ymlを作り、servicesに Dockerfile.local を image に指定する app と postgres を記述します。
-エンドポイントはヘルスチェックしかない単純なアプリですが、起動時に環境変数 ADDR と DATABASE_URL を取得し、取得できなければpanicで落ちるようにしています (コード)。 後に作る Task Definition で環境変数の設定が必要となります。 DATABASE_URL は環境によってデータベースが異なるのでここの値も変わります。">
-<meta name=author content>
-<link rel=canonical href=https://nito95.github.io/posts/2020-11-24/>
-<meta name=google-site-verification content="G-FT3WYS86E7">
-<link rel=stylesheet href=https://nito95.github.io/css/custom.css>
-<link crossorigin=anonymous href=/assets/css/stylesheet.min.35cd0f65a15cafa92372b8313deef5960aae04b90ad722f2bbf509eb0468137e.css integrity="sha256-Nc0PZaFcr6kjcrgxPe71lgquBLkK1yLyu/UJ6wRoE34=" rel="preload stylesheet" as=style>
-<script defer crossorigin=anonymous src=/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5+kdJvBz5iKbt6B5PJI=" onload=hljs.initHighlightingOnLoad()></script>
-<link rel=icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<link rel=icon type=image/png sizes=16x16 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<link rel=icon type=image/png sizes=32x32 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<link rel=apple-touch-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<link rel=mask-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<meta name=theme-color content="#2e2e33">
-<meta name=msapplication-TileColor content="#2e2e33">
-<meta name=generator content="Hugo 0.88.1">
-<meta property="og:title" content="AWS CDK (TS) で prod/staging 環境を分けて Fargate 構築">
-<meta property="og:description" content="AWS CDK (TS) を使って prod/staging でスタック名を分けてFargateの環境構築をしてみました。
+エンドポイントはヘルスチェックしかない単純なアプリですが、起動時に環境変数 ADDR と DATABASE_URL を取得し、取得できなければpanicで落ちるようにしています (コード)。 後に作る Task Definition で環境変数の設定が必要となります。 DATABASE_URL は環境によってデータベースが異なるのでここの値も変わります。"><meta name=author content><link rel=canonical href=https://nito95.github.io/posts/2020-11-24/><meta name=google-site-verification content="G-FT3WYS86E7"><link rel=stylesheet href=https://nito95.github.io/css/custom.css><link crossorigin=anonymous href=/assets/css/stylesheet.min.35cd0f65a15cafa92372b8313deef5960aae04b90ad722f2bbf509eb0468137e.css integrity="sha256-Nc0PZaFcr6kjcrgxPe71lgquBLkK1yLyu/UJ6wRoE34=" rel="preload stylesheet" as=style><script defer crossorigin=anonymous src=/assets/js/highlight.min.e85ad0406048e8176e1c7661b25d5c69297ddfe41dc4124cf75ecb99a4f7b3d1.js integrity="sha256-6FrQQGBI6BduHHZhsl1caSl93+QdxBJM917LmaT3s9E=" onload=hljs.initHighlightingOnLoad()></script>
+<link rel=icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=icon type=image/png sizes=16x16 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=icon type=image/png sizes=32x32 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=apple-touch-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=mask-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><meta name=theme-color content="#2e2e33"><meta name=msapplication-TileColor content="#2e2e33"><meta name=generator content="Hugo 0.101.0"><meta property="og:title" content="AWS CDK (TS) で prod/staging 環境を分けて Fargate 構築"><meta property="og:description" content="AWS CDK (TS) を使って prod/staging でスタック名を分けてFargateの環境構築をしてみました。
 デプロイするものは GET /health_check のみのエンドポイントを持つGo製のアプリです。
 コードは こちら
 AWS ECS Fargate とは ECSはコンテナ化されたアプリケーションを簡単にデプロイ、管理、スケーリングできるコンテナオーケストレーションサービスです。 Fargateはそのコンテナを実行する環境をサーバーレスにするサービスで、EC2インスタンスやそのスケーリングといった管理する必要がなくなります。
@@ -41,14 +19,7 @@ Cloud Formation はAWSのシステム構成をJSONで記述したものです。
 アプリ実装 アプリ自体は本質ではないので何でもよかったのですが、個人的な趣味でGo製にし、フレームワークとして Echo を使ってます。
 Fargateにデプロイするためにコンテナ化が必要なので、ローカル開発用の Dockerfile.local とデプロイ用の Dockerfile.prod の2つのDockerfileを用意します。 Dockerfile は [Qiita] Go 1.12 の開発環境と本番環境の Dockerfile を考える を参考にしています。
 次にローカル開発用にdocker-compose.ymlを作り、servicesに Dockerfile.local を image に指定する app と postgres を記述します。
-エンドポイントはヘルスチェックしかない単純なアプリですが、起動時に環境変数 ADDR と DATABASE_URL を取得し、取得できなければpanicで落ちるようにしています (コード)。 後に作る Task Definition で環境変数の設定が必要となります。 DATABASE_URL は環境によってデータベースが異なるのでここの値も変わります。">
-<meta property="og:type" content="article">
-<meta property="og:url" content="https://nito95.github.io/posts/2020-11-24/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2020-11-24T00:00:00+00:00">
-<meta property="article:modified_time" content="2020-11-24T00:00:00+00:00"><meta property="og:site_name" content="nito95">
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="AWS CDK (TS) で prod/staging 環境を分けて Fargate 構築">
-<meta name=twitter:description content="AWS CDK (TS) を使って prod/staging でスタック名を分けてFargateの環境構築をしてみました。
+エンドポイントはヘルスチェックしかない単純なアプリですが、起動時に環境変数 ADDR と DATABASE_URL を取得し、取得できなければpanicで落ちるようにしています (コード)。 後に作る Task Definition で環境変数の設定が必要となります。 DATABASE_URL は環境によってデータベースが異なるのでここの値も変わります。"><meta property="og:type" content="article"><meta property="og:url" content="https://nito95.github.io/posts/2020-11-24/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2020-11-24T00:00:00+00:00"><meta property="article:modified_time" content="2020-11-24T00:00:00+00:00"><meta property="og:site_name" content="nito95"><meta name=twitter:card content="summary"><meta name=twitter:title content="AWS CDK (TS) で prod/staging 環境を分けて Fargate 構築"><meta name=twitter:description content="AWS CDK (TS) を使って prod/staging でスタック名を分けてFargateの環境構築をしてみました。
 デプロイするものは GET /health_check のみのエンドポイントを持つGo製のアプリです。
 コードは こちら
 AWS ECS Fargate とは ECSはコンテナ化されたアプリケーションを簡単にデプロイ、管理、スケーリングできるコンテナオーケストレーションサービスです。 Fargateはそのコンテナを実行する環境をサーバーレスにするサービスで、EC2インスタンスやそのスケーリングといった管理する必要がなくなります。
@@ -58,247 +29,124 @@ Cloud Formation はAWSのシステム構成をJSONで記述したものです。
 アプリ実装 アプリ自体は本質ではないので何でもよかったのですが、個人的な趣味でGo製にし、フレームワークとして Echo を使ってます。
 Fargateにデプロイするためにコンテナ化が必要なので、ローカル開発用の Dockerfile.local とデプロイ用の Dockerfile.prod の2つのDockerfileを用意します。 Dockerfile は [Qiita] Go 1.12 の開発環境と本番環境の Dockerfile を考える を参考にしています。
 次にローカル開発用にdocker-compose.ymlを作り、servicesに Dockerfile.local を image に指定する app と postgres を記述します。
-エンドポイントはヘルスチェックしかない単純なアプリですが、起動時に環境変数 ADDR と DATABASE_URL を取得し、取得できなければpanicで落ちるようにしています (コード)。 後に作る Task Definition で環境変数の設定が必要となります。 DATABASE_URL は環境によってデータベースが異なるのでここの値も変わります。">
-<script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://nito95.github.io/posts/"},{"@type":"ListItem","position":2,"name":"AWS CDK (TS) で prod/staging 環境を分けて Fargate 構築","item":"https://nito95.github.io/posts/2020-11-24/"}]}</script>
-<script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"AWS CDK (TS) で prod/staging 環境を分けて Fargate 構築","name":"AWS CDK (TS) で prod\/staging 環境を分けて Fargate 構築","description":"AWS CDK (TS) を使って prod/staging でスタック名を分けてFargateの環境構築をしてみました。\nデプロイするものは GET /health_check のみのエンドポイントを持つGo製のアプリです。\nコードは こちら\nAWS ECS Fargate とは ECSはコンテナ化されたアプリケーションを簡単にデプロイ、管理、スケーリングできるコンテナオーケストレーションサービスです。 Fargateはそのコンテナを実行する環境をサーバーレスにするサービスで、EC2インスタンスやそのスケーリングといった管理する必要がなくなります。\n小さなアプリケーションをサクっと作ってデプロイするには Fargate は非常に便利です。\nAWS CDK とは CDKはCloud Formation テンプレートを好きな言語で書くことができるDevelopmern Kitです。\nCloud Formation はAWSのシステム構成をJSONで記述したものです。コード化することで簡単に構築、修正、再利用できます。\nアプリ実装 アプリ自体は本質ではないので何でもよかったのですが、個人的な趣味でGo製にし、フレームワークとして Echo を使ってます。\nFargateにデプロイするためにコンテナ化が必要なので、ローカル開発用の Dockerfile.local とデプロイ用の Dockerfile.prod の2つのDockerfileを用意します。 Dockerfile は [Qiita] Go 1.12 の開発環境と本番環境の Dockerfile を考える を参考にしています。\n次にローカル開発用にdocker-compose.ymlを作り、servicesに Dockerfile.local を image に指定する app と postgres を記述します。\nエンドポイントはヘルスチェックしかない単純なアプリですが、起動時に環境変数 ADDR と DATABASE_URL を取得し、取得できなければpanicで落ちるようにしています (コード)。 後に作る Task Definition で環境変数の設定が必要となります。 DATABASE_URL は環境によってデータベースが異なるのでここの値も変わります。","keywords":[],"articleBody":"AWS CDK (TS) を使って prod/staging でスタック名を分けてFargateの環境構築をしてみました。\nデプロイするものは GET /health_check のみのエンドポイントを持つGo製のアプリです。\nコードは こちら\nAWS ECS Fargate とは ECSはコンテナ化されたアプリケーションを簡単にデプロイ、管理、スケーリングできるコンテナオーケストレーションサービスです。 Fargateはそのコンテナを実行する環境をサーバーレスにするサービスで、EC2インスタンスやそのスケーリングといった管理する必要がなくなります。\n小さなアプリケーションをサクっと作ってデプロイするには Fargate は非常に便利です。\nAWS CDK とは CDKはCloud Formation テンプレートを好きな言語で書くことができるDevelopmern Kitです。\nCloud Formation はAWSのシステム構成をJSONで記述したものです。コード化することで簡単に構築、修正、再利用できます。\nアプリ実装 アプリ自体は本質ではないので何でもよかったのですが、個人的な趣味でGo製にし、フレームワークとして Echo を使ってます。\nFargateにデプロイするためにコンテナ化が必要なので、ローカル開発用の Dockerfile.local とデプロイ用の Dockerfile.prod の2つのDockerfileを用意します。 Dockerfile は [Qiita] Go 1.12 の開発環境と本番環境の Dockerfile を考える を参考にしています。\n次にローカル開発用にdocker-compose.ymlを作り、servicesに Dockerfile.local を image に指定する app と postgres を記述します。\nエンドポイントはヘルスチェックしかない単純なアプリですが、起動時に環境変数 ADDR と DATABASE_URL を取得し、取得できなければpanicで落ちるようにしています (コード)。 後に作る Task Definition で環境変数の設定が必要となります。 DATABASE_URL は環境によってデータベースが異なるのでここの値も変わります。\nCDKプロジェクト構築 $ mkdir cdk $ cdk init app --languate=typescript cdk init した初期状態では最低限のライブラリしかないので、構築したいAWSサービスのライブラリを追加します。\nnpm install @aws-cdk/aws-ec2 @aws-cdk/aws-ecr @aws-cdk/aws-ecs @aws-cdk/aws-ecs-patterns @aws-cdk/aws-iam @aws-cdk/aws-logs 環境ごとに必要な設定をまとめる 今回やりたいこととして、productionやstagingで別の環境変数やCPU, メモリなどを指定しつつ構成は同じにしたいという課題があります。\nそのために lib/environment.ts を作成し、そこに環境ごとに指定したいパラメータをまとめる EnvironmentSettings を定義します。\ninterface EnvironmentParameter { variables: { [key: string]: any }; cpu: number; memory: number; desiredCount: number; } const EnvironmentSettings: { [key: string]: EnvironmentParameter } = { [Environments.STAGING]: { variables: { ADDR: \":8080\", DATABASE_URL: \"postgres://postgres:password@gotemp-staging.hoge.ap-northeast-1.rds.amazonaws.com:5432/gotemp?sslmode=disable\", }, cpu: 256, memory: 512, desiredCount: 1, }, [Environments.PROD]: { variables: { ADDR: \":8080\", DATABASE_URL: \"postgres://postgres:password@gotemp-production.hoge.ap-northeast-1.rds.amazonaws.com:5432/gotemp?sslmode=disable\", }, cpu: 512, memory: 1024, desiredCount: 2, }, }; そして bin/cdk.ts を編集します。\nconst env: environment.Environments = app.node.tryGetContext(\"env\") as environment.Environments; if (!env || !environment.variablesOf(env)) throw new Error(\"Invalid target environment\"); new GotempStack(app, `GotempStack-${env}`, env); こうすることで EnvironmentSettings に [Environments.QA] のように環境を追加し、最後にデプロイする際に cdk deploy -c env=staging と環境を指定することでその名前のprefixが付いたスタックが作成され新環境を簡単に構築できるようになります。\nちなみにここでは環境変数をベタに書いていますが、AWS Secrets Manager や AWS Systems Manager パラメータストア を使用するとよりセキュアで管理もしやすくなると思います。\nVPC VPCは virtual private cloud のことで、仮想ネットワークを構築することでリソースへのアクセスやセキュリティをネットワークで制御できます。\nconst vpc = new ec2.Vpc(this, `${clientPrefix}-vpc`, { maxAzs: 2 }); maxAzs は使用するAvailability Zone数を指定します。Tokyo region には3つAZがありますが今回は2を指定します。 2を指定するとap-northeast-1aにpublicとprivate、ap-northeast-1cにpublicとprivateの計4つのsubnet作成されます。public subnetにはインターネットゲートウェイ、private subnetにはNAT ゲートウェイがルートテーブルに設定されています。(詳しくは→ AWS VPC ユーザーガイド)\nsubnetのサブネットマスクはどうやらデフォルトでは /20 のようで、IPアドレス数は4096個です。\nIAM IAMはAWSのリソースへのアクセスをコントロールするサービスで、ECSで使用するIAM Roleを作成します。 FargateではTask Execution Role と Task Role の2つのRoleが必要です。\nTask Execution Role コンテナを実行するために必要な操作を行うためのIAM Roleです。 Task Execution Roleを使う主体はECS Agentで、ECRからイメージのpull、CloudWatch Logsへのログの出力、Secret ManagerやSSM Parameter Storeからの値の取得などの操作が対象です。\nconst executionRole = new iam.Role(this, \"EcsTaskExecutionRole\", { roleName: `ecs-task-execution-role-${env}`, assumedBy: new iam.ServicePrincipal(\"ecs-tasks.amazonaws.com\"), managedPolicies: [ iam.ManagedPolicy.fromAwsManagedPolicyName( \"service-role/AmazonECSTaskExecutionRolePolicy\" ), ], }); Task Role コンテナアプリケーションからAWSサービスを利用する際に使うIAMです。EC2インスタンスにattachするRoleのECS版との認識でいいと思います。\nconst taskRole = new iam.Role(this, \"EcsServiceTaskRole\", { roleName: `ecs-service-task-role-${env}`, assumedBy: new iam.ServicePrincipal(\"ecs-tasks.amazonaws.com\"), }); Log コンテナのログの出力先となるCloudWatchのLogGroupを作成します。記述してませんがログのRetentionも別途指定できます。\nconst logGroup = new logs.LogGroup(this, \"ServiceLogGroup\", { logGroupName: `gotemp/${env}`, }); ECS Cluster, Task Definition, Repository を作り、 aws-ecs-patterns という便利なmoduleを使って一気にALBやServiceを構築します。 ECS独特の名前が色々登場してますが、よく知らない方は [Qiita]Amazon EC2 Container Service(ECS)の概念整理 が非常にわかりやすいのでオススメです。\naws-ecs-patterns はECSでのよくあるアーキテクチャパターンをサポートしており、少ない記述で簡単に構築することができます。サポートしているパターンは以下です。\n Application Load Balanced Services Network Load Balanced Services Queue Processing Services Scheduled Tasks (cron jobs) Additional Examples  今回は Application Load Balanced Services で作ります。\nまずはCluster。\nconst cluster = new ecs.Cluster(this, \"Cluster\", { vpc, clusterName: `gotemp-${env}-cluster`, }); 続いてRepository。なお コード ではCI/CDを使っていないので、コンテナイメージをビルドしてタグ付けしてRepositoryにpushするのは手作業になります。\nconst repository = ecr.Repository.fromRepositoryName( this, \"gotemp\", \"gotemp\" ); 続いてTask Definitionです。ここで最初に作ったEnvironmentSettingsを使います。\nconst taskDefinition = new ecs.FargateTaskDefinition( this, \"TaskDefinition\", { executionRole: executionRole, taskRole: taskRole, } ); taskDefinition .addContainer(\"api\", { image: ecs.ContainerImage.fromEcrRepository(repository), environment: environmentSettings.variables, logging: ecs.LogDriver.awsLogs({ streamPrefix: \"gotemp\", logGroup, }), }) .addPortMappings({ containerPort: 8080, hostPort: 8080, protocol: ecs.Protocol.TCP, }); 最後に aws-ecs-patterns を使って終わりです。ここでもEnvironmentSettingsを使います。desiredCount は環境別で変わると思いますが、それに伴って max/minHealthyPercent も環境別で変えたほうが良いなと書いてて思いました。\nconst loadBalancedFargateService = new ecsPatterns.ApplicationLoadBalancedFargateService( this, \"Service\", { cluster, cpu: environmentSettings.cpu, memoryLimitMiB: environmentSettings.memory, desiredCount: environmentSettings.desiredCount, taskDefinition: taskDefinition, platformVersion: FargatePlatformVersion.VERSION1_4, maxHealthyPercent: 200, minHealthyPercent: 50, } ); loadBalancedFargateService.targetGroup.configureHealthCheck({ path: \"/health_check\", }); deploy CDKの記述ができたら最後はdeployコマンドを打ちstackを作成します。\n$ cdk deploy -c env=staging envの値に入れられる環境名は Environments enum に定義したものです。\n  こんな感じに作成されるIAMやSGについてプレビューされます。\n作成されたstackを削除するときは $ cdk destroy で消します。\nさいごに 不慣れということもありますが、個人的にはCloudFormationを書くよりもかなりお手軽だと思いました。 TypeScriptは全く書いたことがなかったですが、CDKを書く分には非常にシンプルに書ける分かりやすい言語だなという印象。\nここではRDSの構築は含めていないのでそこもコード化できたらと思います。\n","wordCount":"455","inLanguage":"en","datePublished":"2020-11-24T00:00:00Z","dateModified":"2020-11-24T00:00:00Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://nito95.github.io/posts/2020-11-24/"},"publisher":{"@type":"Organization","name":"nito95 blog","logo":{"@type":"ImageObject","url":"https://nito95.github.io/%3Clink%20/%20abs%20url%3E"}}}</script>
-</head>
-<body id=top>
-<script>localStorage.getItem("pref-theme")==="dark"&&document.body.classList.add('dark')</script>
-<noscript>
-<style type=text/css>#theme-toggle,.top-link{display:none}</style>
-</noscript>
-<header class=header>
-<nav class=nav>
-<div class=logo>
-<a href=https://nito95.github.io/ accesskey=h title="nito95 blog (Alt + H)">nito95 blog</a>
-<span class=logo-switches>
-<button id=theme-toggle accesskey=t title="(Alt + T)"><svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-</button>
-</span>
-</div>
-<ul id=menu>
-<li>
-<a href=https://nito95.github.io/about/ title=About>
-<span>About</span>
-</a>
-</li>
-</ul>
-</nav>
-</header>
-<main class=main>
-<article class=post-single>
-<header class=post-header>
-<h1 class=post-title>
-AWS CDK (TS) で prod/staging 環境を分けて Fargate 構築
-</h1>
-<div class=post-meta>November 24, 2020
-</div>
-</header>
-<div class=post-content><p>AWS CDK (TS) を使って prod/staging でスタック名を分けてFargateの環境構築をしてみました。</p>
-<p>デプロイするものは <code>GET /health_check</code> のみのエンドポイントを持つGo製のアプリです。</p>
-<p>コードは <a href=https://github.com/nito95/awscdk-go-template>こちら</a></p>
-<h2 id=aws-ecs-fargate-とは>AWS ECS Fargate とは<a hidden class=anchor aria-hidden=true href=#aws-ecs-fargate-とは>#</a></h2>
-<p>ECSはコンテナ化されたアプリケーションを簡単にデプロイ、管理、スケーリングできるコンテナオーケストレーションサービスです。
-Fargateはそのコンテナを実行する環境をサーバーレスにするサービスで、EC2インスタンスやそのスケーリングといった管理する必要がなくなります。</p>
-<p>小さなアプリケーションをサクっと作ってデプロイするには Fargate は非常に便利です。</p>
-<h2 id=aws-cdk-とは>AWS CDK とは<a hidden class=anchor aria-hidden=true href=#aws-cdk-とは>#</a></h2>
-<p>CDKはCloud Formation テンプレートを好きな言語で書くことができるDevelopmern Kitです。</p>
-<p>Cloud Formation はAWSのシステム構成をJSONで記述したものです。コード化することで簡単に構築、修正、再利用できます。</p>
-<h2 id=アプリ実装>アプリ実装<a hidden class=anchor aria-hidden=true href=#アプリ実装>#</a></h2>
-<p>アプリ自体は本質ではないので何でもよかったのですが、個人的な趣味でGo製にし、フレームワークとして <a href=https://echo.labstack.com/>Echo</a> を使ってます。</p>
-<p>Fargateにデプロイするためにコンテナ化が必要なので、ローカル開発用の <code>Dockerfile.local</code> とデプロイ用の <code>Dockerfile.prod</code> の2つのDockerfileを用意します。
-Dockerfile は <a href=https://qiita.com/takasp/items/c6288d4836e79801bb19>[Qiita] Go 1.12 の開発環境と本番環境の Dockerfile を考える</a> を参考にしています。</p>
-<p>次にローカル開発用にdocker-compose.ymlを作り、servicesに <code>Dockerfile.local</code> を image に指定する <code>app</code> と <code>postgres</code> を記述します。</p>
-<p>エンドポイントはヘルスチェックしかない単純なアプリですが、起動時に環境変数 <code>ADDR</code> と <code>DATABASE_URL</code> を取得し、取得できなければpanicで落ちるようにしています (<a href=https://github.com/nito95/awscdk-go-template/blob/main/pkg/external/server.go#L59>コード</a>)。
+エンドポイントはヘルスチェックしかない単純なアプリですが、起動時に環境変数 ADDR と DATABASE_URL を取得し、取得できなければpanicで落ちるようにしています (コード)。 後に作る Task Definition で環境変数の設定が必要となります。 DATABASE_URL は環境によってデータベースが異なるのでここの値も変わります。"><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://nito95.github.io/posts/"},{"@type":"ListItem","position":2,"name":"AWS CDK (TS) で prod/staging 環境を分けて Fargate 構築","item":"https://nito95.github.io/posts/2020-11-24/"}]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"AWS CDK (TS) で prod/staging 環境を分けて Fargate 構築","name":"AWS CDK (TS) で prod\/staging 環境を分けて Fargate 構築","description":"AWS CDK (TS) を使って prod/staging でスタック名を分けてFargateの環境構築をしてみました。\nデプロイするものは GET /health_check のみのエンドポイントを持つGo製のアプリです。\nコードは こちら\nAWS ECS Fargate とは ECSはコンテナ化されたアプリケーションを簡単にデプロイ、管理、スケーリングできるコンテナオーケストレーションサービスです。 Fargateはそのコンテナを実行する環境をサーバーレスにするサービスで、EC2インスタンスやそのスケーリングといった管理する必要がなくなります。\n小さなアプリケーションをサクっと作ってデプロイするには Fargate は非常に便利です。\nAWS CDK とは CDKはCloud Formation テンプレートを好きな言語で書くことができるDevelopmern Kitです。\nCloud Formation はAWSのシステム構成をJSONで記述したものです。コード化することで簡単に構築、修正、再利用できます。\nアプリ実装 アプリ自体は本質ではないので何でもよかったのですが、個人的な趣味でGo製にし、フレームワークとして Echo を使ってます。\nFargateにデプロイするためにコンテナ化が必要なので、ローカル開発用の Dockerfile.local とデプロイ用の Dockerfile.prod の2つのDockerfileを用意します。 Dockerfile は [Qiita] Go 1.12 の開発環境と本番環境の Dockerfile を考える を参考にしています。\n次にローカル開発用にdocker-compose.ymlを作り、servicesに Dockerfile.local を image に指定する app と postgres を記述します。\nエンドポイントはヘルスチェックしかない単純なアプリですが、起動時に環境変数 ADDR と DATABASE_URL を取得し、取得できなければpanicで落ちるようにしています (コード)。 後に作る Task Definition で環境変数の設定が必要となります。 DATABASE_URL は環境によってデータベースが異なるのでここの値も変わります。","keywords":[],"articleBody":"AWS CDK (TS) を使って prod/staging でスタック名を分けてFargateの環境構築をしてみました。\nデプロイするものは GET /health_check のみのエンドポイントを持つGo製のアプリです。\nコードは こちら\nAWS ECS Fargate とは ECSはコンテナ化されたアプリケーションを簡単にデプロイ、管理、スケーリングできるコンテナオーケストレーションサービスです。 Fargateはそのコンテナを実行する環境をサーバーレスにするサービスで、EC2インスタンスやそのスケーリングといった管理する必要がなくなります。\n小さなアプリケーションをサクっと作ってデプロイするには Fargate は非常に便利です。\nAWS CDK とは CDKはCloud Formation テンプレートを好きな言語で書くことができるDevelopmern Kitです。\nCloud Formation はAWSのシステム構成をJSONで記述したものです。コード化することで簡単に構築、修正、再利用できます。\nアプリ実装 アプリ自体は本質ではないので何でもよかったのですが、個人的な趣味でGo製にし、フレームワークとして Echo を使ってます。\nFargateにデプロイするためにコンテナ化が必要なので、ローカル開発用の Dockerfile.local とデプロイ用の Dockerfile.prod の2つのDockerfileを用意します。 Dockerfile は [Qiita] Go 1.12 の開発環境と本番環境の Dockerfile を考える を参考にしています。\n次にローカル開発用にdocker-compose.ymlを作り、servicesに Dockerfile.local を image に指定する app と postgres を記述します。\nエンドポイントはヘルスチェックしかない単純なアプリですが、起動時に環境変数 ADDR と DATABASE_URL を取得し、取得できなければpanicで落ちるようにしています (コード)。 後に作る Task Definition で環境変数の設定が必要となります。 DATABASE_URL は環境によってデータベースが異なるのでここの値も変わります。\nCDKプロジェクト構築 $ mkdir cdk $ cdk init app --languate=typescript cdk init した初期状態では最低限のライブラリしかないので、構築したいAWSサービスのライブラリを追加します。\nnpm install @aws-cdk/aws-ec2 @aws-cdk/aws-ecr @aws-cdk/aws-ecs @aws-cdk/aws-ecs-patterns @aws-cdk/aws-iam @aws-cdk/aws-logs 環境ごとに必要な設定をまとめる 今回やりたいこととして、productionやstagingで別の環境変数やCPU, メモリなどを指定しつつ構成は同じにしたいという課題があります。\nそのために lib/environment.ts を作成し、そこに環境ごとに指定したいパラメータをまとめる EnvironmentSettings を定義します。\ninterface EnvironmentParameter { variables: { [key: string]: any }; cpu: number; memory: number; desiredCount: number; } const EnvironmentSettings: { [key: string]: EnvironmentParameter } = { [Environments.STAGING]: { variables: { ADDR: \":8080\", DATABASE_URL: \"postgres://postgres:password@gotemp-staging.hoge.ap-northeast-1.rds.amazonaws.com:5432/gotemp?sslmode=disable\", }, cpu: 256, memory: 512, desiredCount: 1, }, [Environments.PROD]: { variables: { ADDR: \":8080\", DATABASE_URL: \"postgres://postgres:password@gotemp-production.hoge.ap-northeast-1.rds.amazonaws.com:5432/gotemp?sslmode=disable\", }, cpu: 512, memory: 1024, desiredCount: 2, }, }; そして bin/cdk.ts を編集します。\nconst env: environment.Environments = app.node.tryGetContext(\"env\") as environment.Environments; if (!env || !environment.variablesOf(env)) throw new Error(\"Invalid target environment\"); new GotempStack(app, `GotempStack-${env}`, env); こうすることで EnvironmentSettings に [Environments.QA] のように環境を追加し、最後にデプロイする際に cdk deploy -c env=staging と環境を指定することでその名前のprefixが付いたスタックが作成され新環境を簡単に構築できるようになります。\nちなみにここでは環境変数をベタに書いていますが、AWS Secrets Manager や AWS Systems Manager パラメータストア を使用するとよりセキュアで管理もしやすくなると思います。\nVPC VPCは virtual private cloud のことで、仮想ネットワークを構築することでリソースへのアクセスやセキュリティをネットワークで制御できます。\nconst vpc = new ec2.Vpc(this, `${clientPrefix}-vpc`, { maxAzs: 2 }); maxAzs は使用するAvailability Zone数を指定します。Tokyo region には3つAZがありますが今回は2を指定します。 2を指定するとap-northeast-1aにpublicとprivate、ap-northeast-1cにpublicとprivateの計4つのsubnet作成されます。public subnetにはインターネットゲートウェイ、private subnetにはNAT ゲートウェイがルートテーブルに設定されています。(詳しくは→ AWS VPC ユーザーガイド)\nsubnetのサブネットマスクはどうやらデフォルトでは /20 のようで、IPアドレス数は4096個です。\nIAM IAMはAWSのリソースへのアクセスをコントロールするサービスで、ECSで使用するIAM Roleを作成します。 FargateではTask Execution Role と Task Role の2つのRoleが必要です。\nTask Execution Role コンテナを実行するために必要な操作を行うためのIAM Roleです。 Task Execution Roleを使う主体はECS Agentで、ECRからイメージのpull、CloudWatch Logsへのログの出力、Secret ManagerやSSM Parameter Storeからの値の取得などの操作が対象です。\nconst executionRole = new iam.Role(this, \"EcsTaskExecutionRole\", { roleName: `ecs-task-execution-role-${env}`, assumedBy: new iam.ServicePrincipal(\"ecs-tasks.amazonaws.com\"), managedPolicies: [ iam.ManagedPolicy.fromAwsManagedPolicyName( \"service-role/AmazonECSTaskExecutionRolePolicy\" ), ], }); Task Role コンテナアプリケーションからAWSサービスを利用する際に使うIAMです。EC2インスタンスにattachするRoleのECS版との認識でいいと思います。\nconst taskRole = new iam.Role(this, \"EcsServiceTaskRole\", { roleName: `ecs-service-task-role-${env}`, assumedBy: new iam.ServicePrincipal(\"ecs-tasks.amazonaws.com\"), }); Log コンテナのログの出力先となるCloudWatchのLogGroupを作成します。記述してませんがログのRetentionも別途指定できます。\nconst logGroup = new logs.LogGroup(this, \"ServiceLogGroup\", { logGroupName: `gotemp/${env}`, }); ECS Cluster, Task Definition, Repository を作り、 aws-ecs-patterns という便利なmoduleを使って一気にALBやServiceを構築します。 ECS独特の名前が色々登場してますが、よく知らない方は [Qiita]Amazon EC2 Container Service(ECS)の概念整理 が非常にわかりやすいのでオススメです。\naws-ecs-patterns はECSでのよくあるアーキテクチャパターンをサポートしており、少ない記述で簡単に構築することができます。サポートしているパターンは以下です。\nApplication Load Balanced Services Network Load Balanced Services Queue Processing Services Scheduled Tasks (cron jobs) Additional Examples 今回は Application Load Balanced Services で作ります。\nまずはCluster。\nconst cluster = new ecs.Cluster(this, \"Cluster\", { vpc, clusterName: `gotemp-${env}-cluster`, }); 続いてRepository。なお コード ではCI/CDを使っていないので、コンテナイメージをビルドしてタグ付けしてRepositoryにpushするのは手作業になります。\nconst repository = ecr.Repository.fromRepositoryName( this, \"gotemp\", \"gotemp\" ); 続いてTask Definitionです。ここで最初に作ったEnvironmentSettingsを使います。\nconst taskDefinition = new ecs.FargateTaskDefinition( this, \"TaskDefinition\", { executionRole: executionRole, taskRole: taskRole, } ); taskDefinition .addContainer(\"api\", { image: ecs.ContainerImage.fromEcrRepository(repository), environment: environmentSettings.variables, logging: ecs.LogDriver.awsLogs({ streamPrefix: \"gotemp\", logGroup, }), }) .addPortMappings({ containerPort: 8080, hostPort: 8080, protocol: ecs.Protocol.TCP, }); 最後に aws-ecs-patterns を使って終わりです。ここでもEnvironmentSettingsを使います。desiredCount は環境別で変わると思いますが、それに伴って max/minHealthyPercent も環境別で変えたほうが良いなと書いてて思いました。\nconst loadBalancedFargateService = new ecsPatterns.ApplicationLoadBalancedFargateService( this, \"Service\", { cluster, cpu: environmentSettings.cpu, memoryLimitMiB: environmentSettings.memory, desiredCount: environmentSettings.desiredCount, taskDefinition: taskDefinition, platformVersion: FargatePlatformVersion.VERSION1_4, maxHealthyPercent: 200, minHealthyPercent: 50, } ); loadBalancedFargateService.targetGroup.configureHealthCheck({ path: \"/health_check\", }); deploy CDKの記述ができたら最後はdeployコマンドを打ちstackを作成します。\n$ cdk deploy -c env=staging envの値に入れられる環境名は Environments enum に定義したものです。\nこんな感じに作成されるIAMやSGについてプレビューされます。\n作成されたstackを削除するときは $ cdk destroy で消します。\nさいごに 不慣れということもありますが、個人的にはCloudFormationを書くよりもかなりお手軽だと思いました。 TypeScriptは全く書いたことがなかったですが、CDKを書く分には非常にシンプルに書ける分かりやすい言語だなという印象。\nここではRDSの構築は含めていないのでそこもコード化できたらと思います。\n","wordCount":"455","inLanguage":"en","datePublished":"2020-11-24T00:00:00Z","dateModified":"2020-11-24T00:00:00Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://nito95.github.io/posts/2020-11-24/"},"publisher":{"@type":"Organization","name":"nito95 blog","logo":{"@type":"ImageObject","url":"https://nito95.github.io/%3Clink%20/%20abs%20url%3E"}}}</script></head><body id=top><script>localStorage.getItem("pref-theme")==="dark"&&document.body.classList.add("dark")</script><noscript><style type=text/css>#theme-toggle,.top-link{display:none}</style></noscript><header class=header><nav class=nav><div class=logo><a href=https://nito95.github.io/ accesskey=h title="nito95 blog (Alt + H)">nito95 blog</a>
+<span class=logo-switches><button id=theme-toggle accesskey=t title="(Alt + T)"><svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></button></span></div><ul id=menu><li><a href=https://nito95.github.io/about/ title=About><span>About</span></a></li></ul></nav></header><main class=main><article class=post-single><header class=post-header><h1 class=post-title>AWS CDK (TS) で prod/staging 環境を分けて Fargate 構築</h1><div class=post-meta>November 24, 2020</div></header><div class=post-content><p>AWS CDK (TS) を使って prod/staging でスタック名を分けてFargateの環境構築をしてみました。</p><p>デプロイするものは <code>GET /health_check</code> のみのエンドポイントを持つGo製のアプリです。</p><p>コードは <a href=https://github.com/nito95/awscdk-go-template>こちら</a></p><h2 id=aws-ecs-fargate-とは>AWS ECS Fargate とは<a hidden class=anchor aria-hidden=true href=#aws-ecs-fargate-とは>#</a></h2><p>ECSはコンテナ化されたアプリケーションを簡単にデプロイ、管理、スケーリングできるコンテナオーケストレーションサービスです。
+Fargateはそのコンテナを実行する環境をサーバーレスにするサービスで、EC2インスタンスやそのスケーリングといった管理する必要がなくなります。</p><p>小さなアプリケーションをサクっと作ってデプロイするには Fargate は非常に便利です。</p><h2 id=aws-cdk-とは>AWS CDK とは<a hidden class=anchor aria-hidden=true href=#aws-cdk-とは>#</a></h2><p>CDKはCloud Formation テンプレートを好きな言語で書くことができるDevelopmern Kitです。</p><p>Cloud Formation はAWSのシステム構成をJSONで記述したものです。コード化することで簡単に構築、修正、再利用できます。</p><h2 id=アプリ実装>アプリ実装<a hidden class=anchor aria-hidden=true href=#アプリ実装>#</a></h2><p>アプリ自体は本質ではないので何でもよかったのですが、個人的な趣味でGo製にし、フレームワークとして <a href=https://echo.labstack.com/>Echo</a> を使ってます。</p><p>Fargateにデプロイするためにコンテナ化が必要なので、ローカル開発用の <code>Dockerfile.local</code> とデプロイ用の <code>Dockerfile.prod</code> の2つのDockerfileを用意します。
+Dockerfile は <a href=https://qiita.com/takasp/items/c6288d4836e79801bb19>[Qiita] Go 1.12 の開発環境と本番環境の Dockerfile を考える</a> を参考にしています。</p><p>次にローカル開発用にdocker-compose.ymlを作り、servicesに <code>Dockerfile.local</code> を image に指定する <code>app</code> と <code>postgres</code> を記述します。</p><p>エンドポイントはヘルスチェックしかない単純なアプリですが、起動時に環境変数 <code>ADDR</code> と <code>DATABASE_URL</code> を取得し、取得できなければpanicで落ちるようにしています (<a href=https://github.com/nito95/awscdk-go-template/blob/main/pkg/external/server.go#L59>コード</a>)。
 後に作る Task Definition で環境変数の設定が必要となります。
-<code>DATABASE_URL</code> は環境によってデータベースが異なるのでここの値も変わります。</p>
-<h2 id=cdkプロジェクト構築>CDKプロジェクト構築<a hidden class=anchor aria-hidden=true href=#cdkプロジェクト構築>#</a></h2>
-<pre tabindex=0><code>$ mkdir cdk
+<code>DATABASE_URL</code> は環境によってデータベースが異なるのでここの値も変わります。</p><h2 id=cdkプロジェクト構築>CDKプロジェクト構築<a hidden class=anchor aria-hidden=true href=#cdkプロジェクト構築>#</a></h2><pre tabindex=0><code>$ mkdir cdk
 $ cdk init app --languate=typescript
-</code></pre><p><code>cdk init</code> した初期状態では最低限のライブラリしかないので、構築したいAWSサービスのライブラリを追加します。</p>
-<pre tabindex=0><code>npm install @aws-cdk/aws-ec2 @aws-cdk/aws-ecr @aws-cdk/aws-ecs @aws-cdk/aws-ecs-patterns @aws-cdk/aws-iam @aws-cdk/aws-logs
-</code></pre><h2 id=環境ごとに必要な設定をまとめる>環境ごとに必要な設定をまとめる<a hidden class=anchor aria-hidden=true href=#環境ごとに必要な設定をまとめる>#</a></h2>
-<p>今回やりたいこととして、productionやstagingで別の環境変数やCPU, メモリなどを指定しつつ構成は同じにしたいという課題があります。</p>
-<p>そのために <code>lib/environment.ts</code> を作成し、そこに環境ごとに指定したいパラメータをまとめる <code>EnvironmentSettings</code> を定義します。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=color:#66d9ef>interface</span> <span style=color:#a6e22e>EnvironmentParameter</span> {
-  <span style=color:#a6e22e>variables</span><span style=color:#f92672>:</span> { [<span style=color:#a6e22e>key</span>: <span style=color:#66d9ef>string</span>]<span style=color:#f92672>:</span> <span style=color:#66d9ef>any</span> };
-  <span style=color:#a6e22e>cpu</span>: <span style=color:#66d9ef>number</span>;
-  <span style=color:#a6e22e>memory</span>: <span style=color:#66d9ef>number</span>;
-  <span style=color:#a6e22e>desiredCount</span>: <span style=color:#66d9ef>number</span>;
-}
-
-<span style=color:#66d9ef>const</span> <span style=color:#a6e22e>EnvironmentSettings</span><span style=color:#f92672>:</span> { [<span style=color:#a6e22e>key</span>: <span style=color:#66d9ef>string</span>]<span style=color:#f92672>:</span> <span style=color:#a6e22e>EnvironmentParameter</span> } <span style=color:#f92672>=</span> {
-  [<span style=color:#a6e22e>Environments</span>.<span style=color:#a6e22e>STAGING</span>]<span style=color:#f92672>:</span> {
-    <span style=color:#a6e22e>variables</span><span style=color:#f92672>:</span> {
-      <span style=color:#a6e22e>ADDR</span><span style=color:#f92672>:</span> <span style=color:#e6db74>&#34;:8080&#34;</span>,
-      <span style=color:#a6e22e>DATABASE_URL</span><span style=color:#f92672>:</span>
-        <span style=color:#e6db74>&#34;postgres://postgres:password@gotemp-staging.hoge.ap-northeast-1.rds.amazonaws.com:5432/gotemp?sslmode=disable&#34;</span>,
-    },
-    <span style=color:#a6e22e>cpu</span>: <span style=color:#66d9ef>256</span>,
-    <span style=color:#a6e22e>memory</span>: <span style=color:#66d9ef>512</span>,
-    <span style=color:#a6e22e>desiredCount</span>: <span style=color:#66d9ef>1</span>,
-  },
-  [<span style=color:#a6e22e>Environments</span>.<span style=color:#a6e22e>PROD</span>]<span style=color:#f92672>:</span> {
-    <span style=color:#a6e22e>variables</span><span style=color:#f92672>:</span> {
-      <span style=color:#a6e22e>ADDR</span><span style=color:#f92672>:</span> <span style=color:#e6db74>&#34;:8080&#34;</span>,
-      <span style=color:#a6e22e>DATABASE_URL</span><span style=color:#f92672>:</span>
-        <span style=color:#e6db74>&#34;postgres://postgres:password@gotemp-production.hoge.ap-northeast-1.rds.amazonaws.com:5432/gotemp?sslmode=disable&#34;</span>,
-    },
-    <span style=color:#a6e22e>cpu</span>: <span style=color:#66d9ef>512</span>,
-    <span style=color:#a6e22e>memory</span>: <span style=color:#66d9ef>1024</span>,
-    <span style=color:#a6e22e>desiredCount</span>: <span style=color:#66d9ef>2</span>,
-  },
-};
-</code></pre></div><p>そして <code>bin/cdk.ts</code> を編集します。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>env</span>: <span style=color:#66d9ef>environment.Environments</span> <span style=color:#f92672>=</span> <span style=color:#a6e22e>app</span>.<span style=color:#a6e22e>node</span>.<span style=color:#a6e22e>tryGetContext</span>(<span style=color:#e6db74>&#34;env&#34;</span>) <span style=color:#66d9ef>as</span> <span style=color:#a6e22e>environment</span>.<span style=color:#a6e22e>Environments</span>;
-<span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span><span style=color:#a6e22e>env</span> <span style=color:#f92672>||</span> <span style=color:#f92672>!</span><span style=color:#a6e22e>environment</span>.<span style=color:#a6e22e>variablesOf</span>(<span style=color:#a6e22e>env</span>))
-  <span style=color:#66d9ef>throw</span> <span style=color:#66d9ef>new</span> Error(<span style=color:#e6db74>&#34;Invalid target environment&#34;</span>);
-
-<span style=color:#66d9ef>new</span> <span style=color:#a6e22e>GotempStack</span>(<span style=color:#a6e22e>app</span>, <span style=color:#e6db74>`GotempStack-</span><span style=color:#e6db74>${</span><span style=color:#a6e22e>env</span><span style=color:#e6db74>}</span><span style=color:#e6db74>`</span>, <span style=color:#a6e22e>env</span>);
-</code></pre></div><p>こうすることで <code>EnvironmentSettings</code> に <code>[Environments.QA]</code> のように環境を追加し、最後にデプロイする際に <code>cdk deploy -c env=staging</code> と環境を指定することでその名前のprefixが付いたスタックが作成され新環境を簡単に構築できるようになります。</p>
-<p>ちなみにここでは環境変数をベタに書いていますが、<a href=https://aws.amazon.com/secrets-manager/>AWS Secrets Manager</a> や <a href=https://docs.aws.amazon.com/ja_jp/AmazonECS/latest/userguide/specifying-sensitive-data-parameters.html>AWS Systems Manager パラメータストア</a> を使用するとよりセキュアで管理もしやすくなると思います。</p>
-<h2 id=vpc>VPC<a hidden class=anchor aria-hidden=true href=#vpc>#</a></h2>
-<p>VPCは virtual private cloud のことで、仮想ネットワークを構築することでリソースへのアクセスやセキュリティをネットワークで制御できます。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>vpc</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>ec2</span>.<span style=color:#a6e22e>Vpc</span>(<span style=color:#66d9ef>this</span>, <span style=color:#e6db74>`</span><span style=color:#e6db74>${</span><span style=color:#a6e22e>clientPrefix</span><span style=color:#e6db74>}</span><span style=color:#e6db74>-vpc`</span>, { <span style=color:#a6e22e>maxAzs</span>: <span style=color:#66d9ef>2</span> });
-</code></pre></div><p><code>maxAzs</code> は使用するAvailability Zone数を指定します。Tokyo region には3つAZがありますが今回は2を指定します。
-2を指定するとap-northeast-1aにpublicとprivate、ap-northeast-1cにpublicとprivateの計4つのsubnet作成されます。public subnetにはインターネットゲートウェイ、private subnetにはNAT ゲートウェイがルートテーブルに設定されています。(詳しくは→ <a href=https://docs.aws.amazon.com/ja_jp/vpc/latest/userguide/VPC_Scenario2.html>AWS VPC ユーザーガイド</a>)</p>
-<p>subnetのサブネットマスクはどうやらデフォルトでは <code>/20</code> のようで、IPアドレス数は4096個です。</p>
-<h2 id=iam>IAM<a hidden class=anchor aria-hidden=true href=#iam>#</a></h2>
-<p>IAMはAWSのリソースへのアクセスをコントロールするサービスで、ECSで使用するIAM Roleを作成します。
-Fargateでは<code>Task Execution Role</code> と <code>Task Role</code> の2つのRoleが必要です。</p>
-<h3 id=task-execution-role>Task Execution Role<a hidden class=anchor aria-hidden=true href=#task-execution-role>#</a></h3>
-<p>コンテナを実行するために必要な操作を行うためのIAM Roleです。
-Task Execution Roleを使う主体はECS Agentで、ECRからイメージのpull、CloudWatch Logsへのログの出力、Secret ManagerやSSM Parameter Storeからの値の取得などの操作が対象です。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>executionRole</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>iam</span>.<span style=color:#a6e22e>Role</span>(<span style=color:#66d9ef>this</span>, <span style=color:#e6db74>&#34;EcsTaskExecutionRole&#34;</span>, {
-  <span style=color:#a6e22e>roleName</span><span style=color:#f92672>:</span> <span style=color:#e6db74>`ecs-task-execution-role-</span><span style=color:#e6db74>${</span><span style=color:#a6e22e>env</span><span style=color:#e6db74>}</span><span style=color:#e6db74>`</span>,
-  <span style=color:#a6e22e>assumedBy</span>: <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>iam</span>.<span style=color:#a6e22e>ServicePrincipal</span>(<span style=color:#e6db74>&#34;ecs-tasks.amazonaws.com&#34;</span>),
-  <span style=color:#a6e22e>managedPolicies</span><span style=color:#f92672>:</span> [
-    <span style=color:#a6e22e>iam</span>.<span style=color:#a6e22e>ManagedPolicy</span>.<span style=color:#a6e22e>fromAwsManagedPolicyName</span>(
-      <span style=color:#e6db74>&#34;service-role/AmazonECSTaskExecutionRolePolicy&#34;</span>
-    ),
-  ],
-});
-</code></pre></div><h3 id=task-role>Task Role<a hidden class=anchor aria-hidden=true href=#task-role>#</a></h3>
-<p>コンテナアプリケーションからAWSサービスを利用する際に使うIAMです。EC2インスタンスにattachするRoleのECS版との認識でいいと思います。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>taskRole</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>iam</span>.<span style=color:#a6e22e>Role</span>(<span style=color:#66d9ef>this</span>, <span style=color:#e6db74>&#34;EcsServiceTaskRole&#34;</span>, {
-  <span style=color:#a6e22e>roleName</span><span style=color:#f92672>:</span> <span style=color:#e6db74>`ecs-service-task-role-</span><span style=color:#e6db74>${</span><span style=color:#a6e22e>env</span><span style=color:#e6db74>}</span><span style=color:#e6db74>`</span>,
-  <span style=color:#a6e22e>assumedBy</span>: <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>iam</span>.<span style=color:#a6e22e>ServicePrincipal</span>(<span style=color:#e6db74>&#34;ecs-tasks.amazonaws.com&#34;</span>),
-});
-</code></pre></div><h2 id=log>Log<a hidden class=anchor aria-hidden=true href=#log>#</a></h2>
-<p>コンテナのログの出力先となるCloudWatchのLogGroupを作成します。記述してませんがログのRetentionも別途指定できます。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>logGroup</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>logs</span>.<span style=color:#a6e22e>LogGroup</span>(<span style=color:#66d9ef>this</span>, <span style=color:#e6db74>&#34;ServiceLogGroup&#34;</span>, {
-  <span style=color:#a6e22e>logGroupName</span><span style=color:#f92672>:</span> <span style=color:#e6db74>`gotemp/</span><span style=color:#e6db74>${</span><span style=color:#a6e22e>env</span><span style=color:#e6db74>}</span><span style=color:#e6db74>`</span>,
-});
-</code></pre></div><h2 id=ecs>ECS<a hidden class=anchor aria-hidden=true href=#ecs>#</a></h2>
-<p>Cluster, Task Definition, Repository を作り、 <a href=https://docs.aws.amazon.com/cdk/api/latest/docs/aws-ecs-patterns-readme.html>aws-ecs-patterns</a> という便利なmoduleを使って一気にALBやServiceを構築します。
-ECS独特の名前が色々登場してますが、よく知らない方は <a href=https://qiita.com/NewGyu/items/9597ed2eda763bd504d7>[Qiita]Amazon EC2 Container Service(ECS)の概念整理</a> が非常にわかりやすいのでオススメです。</p>
-<p><a href=https://docs.aws.amazon.com/cdk/api/latest/docs/aws-ecs-patterns-readme.html>aws-ecs-patterns</a> はECSでのよくあるアーキテクチャパターンをサポートしており、少ない記述で簡単に構築することができます。サポートしているパターンは以下です。</p>
-<ul>
-<li>Application Load Balanced Services</li>
-<li>Network Load Balanced Services</li>
-<li>Queue Processing Services</li>
-<li>Scheduled Tasks (cron jobs)</li>
-<li>Additional Examples</li>
-</ul>
-<p>今回は <code>Application Load Balanced Services</code> で作ります。</p>
-<p>まずはCluster。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>cluster</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>ecs</span>.<span style=color:#a6e22e>Cluster</span>(<span style=color:#66d9ef>this</span>, <span style=color:#e6db74>&#34;Cluster&#34;</span>, {
-  <span style=color:#a6e22e>vpc</span>,
-  <span style=color:#a6e22e>clusterName</span><span style=color:#f92672>:</span> <span style=color:#e6db74>`gotemp-</span><span style=color:#e6db74>${</span><span style=color:#a6e22e>env</span><span style=color:#e6db74>}</span><span style=color:#e6db74>-cluster`</span>,
-});
-</code></pre></div><p>続いてRepository。なお コード ではCI/CDを使っていないので、コンテナイメージをビルドしてタグ付けしてRepositoryにpushするのは手作業になります。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>repository</span> <span style=color:#f92672>=</span> <span style=color:#a6e22e>ecr</span>.<span style=color:#a6e22e>Repository</span>.<span style=color:#a6e22e>fromRepositoryName</span>(
-  <span style=color:#66d9ef>this</span>,
-  <span style=color:#e6db74>&#34;gotemp&#34;</span>,
-  <span style=color:#e6db74>&#34;gotemp&#34;</span>
-);
-</code></pre></div><p>続いてTask Definitionです。ここで最初に作ったEnvironmentSettingsを使います。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>taskDefinition</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>ecs</span>.<span style=color:#a6e22e>FargateTaskDefinition</span>(
-  <span style=color:#66d9ef>this</span>,
-  <span style=color:#e6db74>&#34;TaskDefinition&#34;</span>,
-  {
-    <span style=color:#a6e22e>executionRole</span>: <span style=color:#66d9ef>executionRole</span>,
-    <span style=color:#a6e22e>taskRole</span>: <span style=color:#66d9ef>taskRole</span>,
-  }
-);
-
-<span style=color:#a6e22e>taskDefinition</span>
-  .<span style=color:#a6e22e>addContainer</span>(<span style=color:#e6db74>&#34;api&#34;</span>, {
-    <span style=color:#a6e22e>image</span>: <span style=color:#66d9ef>ecs.ContainerImage.fromEcrRepository</span>(<span style=color:#a6e22e>repository</span>),
-    <span style=color:#a6e22e>environment</span>: <span style=color:#66d9ef>environmentSettings.variables</span>,
-    <span style=color:#a6e22e>logging</span>: <span style=color:#66d9ef>ecs.LogDriver.awsLogs</span>({
-      <span style=color:#a6e22e>streamPrefix</span><span style=color:#f92672>:</span> <span style=color:#e6db74>&#34;gotemp&#34;</span>,
-      <span style=color:#a6e22e>logGroup</span>,
-    }),
-  })
-  .<span style=color:#a6e22e>addPortMappings</span>({
-    <span style=color:#a6e22e>containerPort</span>: <span style=color:#66d9ef>8080</span>,
-    <span style=color:#a6e22e>hostPort</span>: <span style=color:#66d9ef>8080</span>,
-    <span style=color:#a6e22e>protocol</span>: <span style=color:#66d9ef>ecs.Protocol.TCP</span>,
-  });
-</code></pre></div><p>最後に aws-ecs-patterns を使って終わりです。ここでもEnvironmentSettingsを使います。<code>desiredCount</code> は環境別で変わると思いますが、それに伴って <code>max/minHealthyPercent</code> も環境別で変えたほうが良いなと書いてて思いました。</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>loadBalancedFargateService</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>ecsPatterns</span>.<span style=color:#a6e22e>ApplicationLoadBalancedFargateService</span>(
-  <span style=color:#66d9ef>this</span>,
-  <span style=color:#e6db74>&#34;Service&#34;</span>,
-  {
-    <span style=color:#a6e22e>cluster</span>,
-    <span style=color:#a6e22e>cpu</span>: <span style=color:#66d9ef>environmentSettings.cpu</span>,
-    <span style=color:#a6e22e>memoryLimitMiB</span>: <span style=color:#66d9ef>environmentSettings.memory</span>,
-    <span style=color:#a6e22e>desiredCount</span>: <span style=color:#66d9ef>environmentSettings.desiredCount</span>,
-    <span style=color:#a6e22e>taskDefinition</span>: <span style=color:#66d9ef>taskDefinition</span>,
-    <span style=color:#a6e22e>platformVersion</span>: <span style=color:#66d9ef>FargatePlatformVersion.VERSION1_4</span>,
-    <span style=color:#a6e22e>maxHealthyPercent</span>: <span style=color:#66d9ef>200</span>,
-    <span style=color:#a6e22e>minHealthyPercent</span>: <span style=color:#66d9ef>50</span>,
-  }
-);
-
-<span style=color:#a6e22e>loadBalancedFargateService</span>.<span style=color:#a6e22e>targetGroup</span>.<span style=color:#a6e22e>configureHealthCheck</span>({
-  <span style=color:#a6e22e>path</span><span style=color:#f92672>:</span> <span style=color:#e6db74>&#34;/health_check&#34;</span>,
-});
-</code></pre></div><h2 id=deploy>deploy<a hidden class=anchor aria-hidden=true href=#deploy>#</a></h2>
-<p>CDKの記述ができたら最後はdeployコマンドを打ちstackを作成します。</p>
-<pre tabindex=0><code>$ cdk deploy -c env=staging
-</code></pre><p>envの値に入れられる環境名は <a href=https://github.com/nito95/awscdk-go-template/blob/main/cdk/lib/environment.ts#L1>Environments enum</a> に定義したものです。</p>
-<figure>
-<img loading=lazy src=/images/2020-11-24-1.png>
-</figure>
-<p>こんな感じに作成されるIAMやSGについてプレビューされます。</p>
-<p>作成されたstackを削除するときは <code>$ cdk destroy</code> で消します。</p>
-<h2 id=さいごに>さいごに<a hidden class=anchor aria-hidden=true href=#さいごに>#</a></h2>
-<p>不慣れということもありますが、個人的にはCloudFormationを書くよりもかなりお手軽だと思いました。
-TypeScriptは全く書いたことがなかったですが、CDKを書く分には非常にシンプルに書ける分かりやすい言語だなという印象。</p>
-<p>ここではRDSの構築は含めていないのでそこもコード化できたらと思います。</p>
-</div>
-<footer class=post-footer>
-<nav class=paginav>
-<a class=prev href=https://nito95.github.io/posts/2021-03-02/>
-<span class=title>« Prev Page</span>
-<br>
-<span>AtCoder C++入門 APG4b</span>
-</a>
-<a class=next href=https://nito95.github.io/posts/2020-07-08/>
-<span class=title>Next Page »</span>
-<br>
-<span>Tile38 による Geofencing と R-tree</span>
-</a>
-</nav>
-</footer>
-</article>
-</main>
-<footer class=footer>
-<span>&copy; 2021 <a href=https://nito95.github.io/>nito95 blog</a></span>
-<span>
-Powered by
+</code></pre><p><code>cdk init</code> した初期状態では最低限のライブラリしかないので、構築したいAWSサービスのライブラリを追加します。</p><pre tabindex=0><code>npm install @aws-cdk/aws-ec2 @aws-cdk/aws-ecr @aws-cdk/aws-ecs @aws-cdk/aws-ecs-patterns @aws-cdk/aws-iam @aws-cdk/aws-logs
+</code></pre><h2 id=環境ごとに必要な設定をまとめる>環境ごとに必要な設定をまとめる<a hidden class=anchor aria-hidden=true href=#環境ごとに必要な設定をまとめる>#</a></h2><p>今回やりたいこととして、productionやstagingで別の環境変数やCPU, メモリなどを指定しつつ構成は同じにしたいという課題があります。</p><p>そのために <code>lib/environment.ts</code> を作成し、そこに環境ごとに指定したいパラメータをまとめる <code>EnvironmentSettings</code> を定義します。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=display:flex><span><span style=color:#66d9ef>interface</span> <span style=color:#a6e22e>EnvironmentParameter</span> {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>variables</span><span style=color:#f92672>:</span> { [<span style=color:#a6e22e>key</span>: <span style=color:#66d9ef>string</span>]<span style=color:#f92672>:</span> <span style=color:#66d9ef>any</span> };
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>cpu</span>: <span style=color:#66d9ef>number</span>;
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>memory</span>: <span style=color:#66d9ef>number</span>;
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>desiredCount</span>: <span style=color:#66d9ef>number</span>;
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>EnvironmentSettings</span><span style=color:#f92672>:</span> { [<span style=color:#a6e22e>key</span>: <span style=color:#66d9ef>string</span>]<span style=color:#f92672>:</span> <span style=color:#a6e22e>EnvironmentParameter</span> } <span style=color:#f92672>=</span> {
+</span></span><span style=display:flex><span>  [<span style=color:#a6e22e>Environments</span>.<span style=color:#a6e22e>STAGING</span>]<span style=color:#f92672>:</span> {
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>variables</span><span style=color:#f92672>:</span> {
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>ADDR</span><span style=color:#f92672>:</span> <span style=color:#e6db74>&#34;:8080&#34;</span>,
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>DATABASE_URL</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>        <span style=color:#e6db74>&#34;postgres://postgres:password@gotemp-staging.hoge.ap-northeast-1.rds.amazonaws.com:5432/gotemp?sslmode=disable&#34;</span>,
+</span></span><span style=display:flex><span>    },
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>cpu</span>: <span style=color:#66d9ef>256</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>memory</span>: <span style=color:#66d9ef>512</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>desiredCount</span>: <span style=color:#66d9ef>1</span>,
+</span></span><span style=display:flex><span>  },
+</span></span><span style=display:flex><span>  [<span style=color:#a6e22e>Environments</span>.<span style=color:#a6e22e>PROD</span>]<span style=color:#f92672>:</span> {
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>variables</span><span style=color:#f92672>:</span> {
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>ADDR</span><span style=color:#f92672>:</span> <span style=color:#e6db74>&#34;:8080&#34;</span>,
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>DATABASE_URL</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>        <span style=color:#e6db74>&#34;postgres://postgres:password@gotemp-production.hoge.ap-northeast-1.rds.amazonaws.com:5432/gotemp?sslmode=disable&#34;</span>,
+</span></span><span style=display:flex><span>    },
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>cpu</span>: <span style=color:#66d9ef>512</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>memory</span>: <span style=color:#66d9ef>1024</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>desiredCount</span>: <span style=color:#66d9ef>2</span>,
+</span></span><span style=display:flex><span>  },
+</span></span><span style=display:flex><span>};
+</span></span></code></pre></div><p>そして <code>bin/cdk.ts</code> を編集します。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=display:flex><span><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>env</span>: <span style=color:#66d9ef>environment.Environments</span> <span style=color:#f92672>=</span> <span style=color:#a6e22e>app</span>.<span style=color:#a6e22e>node</span>.<span style=color:#a6e22e>tryGetContext</span>(<span style=color:#e6db74>&#34;env&#34;</span>) <span style=color:#66d9ef>as</span> <span style=color:#a6e22e>environment</span>.<span style=color:#a6e22e>Environments</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span><span style=color:#a6e22e>env</span> <span style=color:#f92672>||</span> <span style=color:#f92672>!</span><span style=color:#a6e22e>environment</span>.<span style=color:#a6e22e>variablesOf</span>(<span style=color:#a6e22e>env</span>))
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>throw</span> <span style=color:#66d9ef>new</span> Error(<span style=color:#e6db74>&#34;Invalid target environment&#34;</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>new</span> <span style=color:#a6e22e>GotempStack</span>(<span style=color:#a6e22e>app</span>, <span style=color:#e6db74>`GotempStack-</span><span style=color:#e6db74>${</span><span style=color:#a6e22e>env</span><span style=color:#e6db74>}</span><span style=color:#e6db74>`</span>, <span style=color:#a6e22e>env</span>);
+</span></span></code></pre></div><p>こうすることで <code>EnvironmentSettings</code> に <code>[Environments.QA]</code> のように環境を追加し、最後にデプロイする際に <code>cdk deploy -c env=staging</code> と環境を指定することでその名前のprefixが付いたスタックが作成され新環境を簡単に構築できるようになります。</p><p>ちなみにここでは環境変数をベタに書いていますが、<a href=https://aws.amazon.com/secrets-manager/>AWS Secrets Manager</a> や <a href=https://docs.aws.amazon.com/ja_jp/AmazonECS/latest/userguide/specifying-sensitive-data-parameters.html>AWS Systems Manager パラメータストア</a> を使用するとよりセキュアで管理もしやすくなると思います。</p><h2 id=vpc>VPC<a hidden class=anchor aria-hidden=true href=#vpc>#</a></h2><p>VPCは virtual private cloud のことで、仮想ネットワークを構築することでリソースへのアクセスやセキュリティをネットワークで制御できます。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=display:flex><span><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>vpc</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>ec2</span>.<span style=color:#a6e22e>Vpc</span>(<span style=color:#66d9ef>this</span>, <span style=color:#e6db74>`</span><span style=color:#e6db74>${</span><span style=color:#a6e22e>clientPrefix</span><span style=color:#e6db74>}</span><span style=color:#e6db74>-vpc`</span>, { <span style=color:#a6e22e>maxAzs</span>: <span style=color:#66d9ef>2</span> });
+</span></span></code></pre></div><p><code>maxAzs</code> は使用するAvailability Zone数を指定します。Tokyo region には3つAZがありますが今回は2を指定します。
+2を指定するとap-northeast-1aにpublicとprivate、ap-northeast-1cにpublicとprivateの計4つのsubnet作成されます。public subnetにはインターネットゲートウェイ、private subnetにはNAT ゲートウェイがルートテーブルに設定されています。(詳しくは→ <a href=https://docs.aws.amazon.com/ja_jp/vpc/latest/userguide/VPC_Scenario2.html>AWS VPC ユーザーガイド</a>)</p><p>subnetのサブネットマスクはどうやらデフォルトでは <code>/20</code> のようで、IPアドレス数は4096個です。</p><h2 id=iam>IAM<a hidden class=anchor aria-hidden=true href=#iam>#</a></h2><p>IAMはAWSのリソースへのアクセスをコントロールするサービスで、ECSで使用するIAM Roleを作成します。
+Fargateでは<code>Task Execution Role</code> と <code>Task Role</code> の2つのRoleが必要です。</p><h3 id=task-execution-role>Task Execution Role<a hidden class=anchor aria-hidden=true href=#task-execution-role>#</a></h3><p>コンテナを実行するために必要な操作を行うためのIAM Roleです。
+Task Execution Roleを使う主体はECS Agentで、ECRからイメージのpull、CloudWatch Logsへのログの出力、Secret ManagerやSSM Parameter Storeからの値の取得などの操作が対象です。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=display:flex><span><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>executionRole</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>iam</span>.<span style=color:#a6e22e>Role</span>(<span style=color:#66d9ef>this</span>, <span style=color:#e6db74>&#34;EcsTaskExecutionRole&#34;</span>, {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>roleName</span><span style=color:#f92672>:</span> <span style=color:#e6db74>`ecs-task-execution-role-</span><span style=color:#e6db74>${</span><span style=color:#a6e22e>env</span><span style=color:#e6db74>}</span><span style=color:#e6db74>`</span>,
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>assumedBy</span>: <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>iam</span>.<span style=color:#a6e22e>ServicePrincipal</span>(<span style=color:#e6db74>&#34;ecs-tasks.amazonaws.com&#34;</span>),
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>managedPolicies</span><span style=color:#f92672>:</span> [
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>iam</span>.<span style=color:#a6e22e>ManagedPolicy</span>.<span style=color:#a6e22e>fromAwsManagedPolicyName</span>(
+</span></span><span style=display:flex><span>      <span style=color:#e6db74>&#34;service-role/AmazonECSTaskExecutionRolePolicy&#34;</span>
+</span></span><span style=display:flex><span>    ),
+</span></span><span style=display:flex><span>  ],
+</span></span><span style=display:flex><span>});
+</span></span></code></pre></div><h3 id=task-role>Task Role<a hidden class=anchor aria-hidden=true href=#task-role>#</a></h3><p>コンテナアプリケーションからAWSサービスを利用する際に使うIAMです。EC2インスタンスにattachするRoleのECS版との認識でいいと思います。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=display:flex><span><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>taskRole</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>iam</span>.<span style=color:#a6e22e>Role</span>(<span style=color:#66d9ef>this</span>, <span style=color:#e6db74>&#34;EcsServiceTaskRole&#34;</span>, {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>roleName</span><span style=color:#f92672>:</span> <span style=color:#e6db74>`ecs-service-task-role-</span><span style=color:#e6db74>${</span><span style=color:#a6e22e>env</span><span style=color:#e6db74>}</span><span style=color:#e6db74>`</span>,
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>assumedBy</span>: <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>iam</span>.<span style=color:#a6e22e>ServicePrincipal</span>(<span style=color:#e6db74>&#34;ecs-tasks.amazonaws.com&#34;</span>),
+</span></span><span style=display:flex><span>});
+</span></span></code></pre></div><h2 id=log>Log<a hidden class=anchor aria-hidden=true href=#log>#</a></h2><p>コンテナのログの出力先となるCloudWatchのLogGroupを作成します。記述してませんがログのRetentionも別途指定できます。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=display:flex><span><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>logGroup</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>logs</span>.<span style=color:#a6e22e>LogGroup</span>(<span style=color:#66d9ef>this</span>, <span style=color:#e6db74>&#34;ServiceLogGroup&#34;</span>, {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>logGroupName</span><span style=color:#f92672>:</span> <span style=color:#e6db74>`gotemp/</span><span style=color:#e6db74>${</span><span style=color:#a6e22e>env</span><span style=color:#e6db74>}</span><span style=color:#e6db74>`</span>,
+</span></span><span style=display:flex><span>});
+</span></span></code></pre></div><h2 id=ecs>ECS<a hidden class=anchor aria-hidden=true href=#ecs>#</a></h2><p>Cluster, Task Definition, Repository を作り、 <a href=https://docs.aws.amazon.com/cdk/api/latest/docs/aws-ecs-patterns-readme.html>aws-ecs-patterns</a> という便利なmoduleを使って一気にALBやServiceを構築します。
+ECS独特の名前が色々登場してますが、よく知らない方は <a href=https://qiita.com/NewGyu/items/9597ed2eda763bd504d7>[Qiita]Amazon EC2 Container Service(ECS)の概念整理</a> が非常にわかりやすいのでオススメです。</p><p><a href=https://docs.aws.amazon.com/cdk/api/latest/docs/aws-ecs-patterns-readme.html>aws-ecs-patterns</a> はECSでのよくあるアーキテクチャパターンをサポートしており、少ない記述で簡単に構築することができます。サポートしているパターンは以下です。</p><ul><li>Application Load Balanced Services</li><li>Network Load Balanced Services</li><li>Queue Processing Services</li><li>Scheduled Tasks (cron jobs)</li><li>Additional Examples</li></ul><p>今回は <code>Application Load Balanced Services</code> で作ります。</p><p>まずはCluster。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=display:flex><span><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>cluster</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>ecs</span>.<span style=color:#a6e22e>Cluster</span>(<span style=color:#66d9ef>this</span>, <span style=color:#e6db74>&#34;Cluster&#34;</span>, {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>vpc</span>,
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>clusterName</span><span style=color:#f92672>:</span> <span style=color:#e6db74>`gotemp-</span><span style=color:#e6db74>${</span><span style=color:#a6e22e>env</span><span style=color:#e6db74>}</span><span style=color:#e6db74>-cluster`</span>,
+</span></span><span style=display:flex><span>});
+</span></span></code></pre></div><p>続いてRepository。なお コード ではCI/CDを使っていないので、コンテナイメージをビルドしてタグ付けしてRepositoryにpushするのは手作業になります。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=display:flex><span><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>repository</span> <span style=color:#f92672>=</span> <span style=color:#a6e22e>ecr</span>.<span style=color:#a6e22e>Repository</span>.<span style=color:#a6e22e>fromRepositoryName</span>(
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>this</span>,
+</span></span><span style=display:flex><span>  <span style=color:#e6db74>&#34;gotemp&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#e6db74>&#34;gotemp&#34;</span>
+</span></span><span style=display:flex><span>);
+</span></span></code></pre></div><p>続いてTask Definitionです。ここで最初に作ったEnvironmentSettingsを使います。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=display:flex><span><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>taskDefinition</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>ecs</span>.<span style=color:#a6e22e>FargateTaskDefinition</span>(
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>this</span>,
+</span></span><span style=display:flex><span>  <span style=color:#e6db74>&#34;TaskDefinition&#34;</span>,
+</span></span><span style=display:flex><span>  {
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>executionRole</span>: <span style=color:#66d9ef>executionRole</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>taskRole</span>: <span style=color:#66d9ef>taskRole</span>,
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>taskDefinition</span>
+</span></span><span style=display:flex><span>  .<span style=color:#a6e22e>addContainer</span>(<span style=color:#e6db74>&#34;api&#34;</span>, {
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>image</span>: <span style=color:#66d9ef>ecs.ContainerImage.fromEcrRepository</span>(<span style=color:#a6e22e>repository</span>),
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>environment</span>: <span style=color:#66d9ef>environmentSettings.variables</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>logging</span>: <span style=color:#66d9ef>ecs.LogDriver.awsLogs</span>({
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>streamPrefix</span><span style=color:#f92672>:</span> <span style=color:#e6db74>&#34;gotemp&#34;</span>,
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>logGroup</span>,
+</span></span><span style=display:flex><span>    }),
+</span></span><span style=display:flex><span>  })
+</span></span><span style=display:flex><span>  .<span style=color:#a6e22e>addPortMappings</span>({
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>containerPort</span>: <span style=color:#66d9ef>8080</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>hostPort</span>: <span style=color:#66d9ef>8080</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>protocol</span>: <span style=color:#66d9ef>ecs.Protocol.TCP</span>,
+</span></span><span style=display:flex><span>  });
+</span></span></code></pre></div><p>最後に aws-ecs-patterns を使って終わりです。ここでもEnvironmentSettingsを使います。<code>desiredCount</code> は環境別で変わると思いますが、それに伴って <code>max/minHealthyPercent</code> も環境別で変えたほうが良いなと書いてて思いました。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=display:flex><span><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>loadBalancedFargateService</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>ecsPatterns</span>.<span style=color:#a6e22e>ApplicationLoadBalancedFargateService</span>(
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>this</span>,
+</span></span><span style=display:flex><span>  <span style=color:#e6db74>&#34;Service&#34;</span>,
+</span></span><span style=display:flex><span>  {
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>cluster</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>cpu</span>: <span style=color:#66d9ef>environmentSettings.cpu</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>memoryLimitMiB</span>: <span style=color:#66d9ef>environmentSettings.memory</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>desiredCount</span>: <span style=color:#66d9ef>environmentSettings.desiredCount</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>taskDefinition</span>: <span style=color:#66d9ef>taskDefinition</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>platformVersion</span>: <span style=color:#66d9ef>FargatePlatformVersion.VERSION1_4</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>maxHealthyPercent</span>: <span style=color:#66d9ef>200</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>minHealthyPercent</span>: <span style=color:#66d9ef>50</span>,
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>loadBalancedFargateService</span>.<span style=color:#a6e22e>targetGroup</span>.<span style=color:#a6e22e>configureHealthCheck</span>({
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>path</span><span style=color:#f92672>:</span> <span style=color:#e6db74>&#34;/health_check&#34;</span>,
+</span></span><span style=display:flex><span>});
+</span></span></code></pre></div><h2 id=deploy>deploy<a hidden class=anchor aria-hidden=true href=#deploy>#</a></h2><p>CDKの記述ができたら最後はdeployコマンドを打ちstackを作成します。</p><pre tabindex=0><code>$ cdk deploy -c env=staging
+</code></pre><p>envの値に入れられる環境名は <a href=https://github.com/nito95/awscdk-go-template/blob/main/cdk/lib/environment.ts#L1>Environments enum</a> に定義したものです。</p><figure><img loading=lazy src=/images/2020-11-24-1.png></figure><p>こんな感じに作成されるIAMやSGについてプレビューされます。</p><p>作成されたstackを削除するときは <code>$ cdk destroy</code> で消します。</p><h2 id=さいごに>さいごに<a hidden class=anchor aria-hidden=true href=#さいごに>#</a></h2><p>不慣れということもありますが、個人的にはCloudFormationを書くよりもかなりお手軽だと思いました。
+TypeScriptは全く書いたことがなかったですが、CDKを書く分には非常にシンプルに書ける分かりやすい言語だなという印象。</p><p>ここではRDSの構築は含めていないのでそこもコード化できたらと思います。</p></div><footer class=post-footer><nav class=paginav><a class=prev href=https://nito95.github.io/posts/2021-03-02/><span class=title>« Prev Page</span><br><span>AtCoder C++入門 APG4b</span></a>
+<a class=next href=https://nito95.github.io/posts/2020-07-08/><span class=title>Next Page »</span><br><span>Tile38 による Geofencing と R-tree</span></a></nav></footer></article></main><footer class=footer><span>&copy; 2022 <a href=https://nito95.github.io/>nito95 blog</a></span>
+<span>Powered by
 <a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
-        <a href=https://git.io/hugopapermod rel=noopener target=_blank>PaperMod</a>
-</span>
-</footer>
-<a href=#top aria-label="go to top" title="Go to Top (Alt + G)">
-<button class=top-link id=top-link type=button accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
-</button>
-</a>
-<script>let menu=document.getElementById('menu');menu.scrollLeft=localStorage.getItem("menu-scroll-position"),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)},document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener("click",function(b){b.preventDefault();var a=this.getAttribute("href").substr(1);window.matchMedia('(prefers-reduced-motion: reduce)').matches?document.querySelector(`[id='${decodeURIComponent(a)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(a)}']`).scrollIntoView({behavior:"smooth"}),a==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${a}`)})})</script>
-<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
-<script>document.getElementById("theme-toggle").addEventListener("click",()=>{document.body.className.includes("dark")?(document.body.classList.remove('dark'),localStorage.setItem("pref-theme",'light')):(document.body.classList.add('dark'),localStorage.setItem("pref-theme",'dark'))})</script>
-</body>
-</html>
+        <a href=https://git.io/hugopapermod rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top aria-label="go to top" title="Go to Top (Alt + G)"><button class=top-link id=top-link type=button accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg></button></a>
+<script>let menu=document.getElementById("menu");menu.scrollLeft=localStorage.getItem("menu-scroll-position"),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)},document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(e){e.preventDefault();var t=this.getAttribute("href").substr(1);window.matchMedia("(prefers-reduced-motion: reduce)").matches?document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView({behavior:"smooth"}),t==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${t}`)})})</script><script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script><script>document.getElementById("theme-toggle").addEventListener("click",()=>{document.body.className.includes("dark")?(document.body.classList.remove("dark"),localStorage.setItem("pref-theme","light")):(document.body.classList.add("dark"),localStorage.setItem("pref-theme","dark"))})</script></body></html>

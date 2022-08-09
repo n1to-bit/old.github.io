@@ -1,271 +1,69 @@
-<!doctype html><html lang=en dir=auto>
-<head><meta charset=utf-8>
-<meta http-equiv=x-ua-compatible content="IE=edge">
-<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=robots content="index, follow">
-<title>Rubyのメモリ割り当て | nito95 blog</title>
-<meta name=keywords content="Ruby,Linux">
-<meta name=description content="とあるSaaS製品を開発保守している知り合いが、Puma (Rails) のメモリが高止まりしてしまう現象が起きていたが、記事 Ruby: mallocでマルチスレッドプログラムのメモリが倍増する理由（翻訳） を参考に環境変数 MALLOC_ARENA_MAX をいじったら解決したと話していました。
+<!doctype html><html lang=en dir=auto><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=robots content="index, follow"><title>Rubyのメモリ割り当て | nito95 blog</title><meta name=keywords content="Ruby,Linux"><meta name=description content="とあるSaaS製品を開発保守している知り合いが、Puma (Rails) のメモリが高止まりしてしまう現象が起きていたが、記事 Ruby: mallocでマルチスレッドプログラムのメモリが倍増する理由（翻訳） を参考に環境変数 MALLOC_ARENA_MAX をいじったら解決したと話していました。
 自分も現在 Puma (Rails) で動いているSNSアプリのバックエンドを担当しています。 1日あたり180 ~ 250万のAPIリクエストが行われており、1つのインスタンスあたり 2 worker * 8~32 threads = 16~64 threads でリクエストを処理しています。 今は特にメモリで困ってはいないですが、いつか同じ現象に悩まされるかもと思い、記事を読みつつ周辺知識を調べて深掘ってみました。
 メモリ割り当てで使われる3つのレイヤー Ruby でのメモリ割り当てには3つのレイヤーが関与します。
- Ruby VM メモリアロケータ カーネル  Ruby VMではRubyのオブジェクトを管理がされています。
-  Rubyのオブジェクトは40byte固定で、オブジェクトが生成されるとヒープページ内のスロットに格納されます。 もし空きスロットがない場合は新たなヒープページを割り当てます。 また40byte以上のオブジェクトの場合はヒープページの外に格納し、スロットにはポインタが格納されます。 新たなヒープページの割り当て、ヒープページ外への格納、これはどちらもメモリアロケータが使われます。
+Ruby VM メモリアロケータ カーネル Ruby VMではRubyのオブジェクトを管理がされています。
+Rubyのオブジェクトは40byte固定で、オブジェクトが生成されるとヒープページ内のスロットに格納されます。 もし空きスロットがない場合は新たなヒープページを割り当てます。 また40byte以上のオブジェクトの場合はヒープページの外に格納し、スロットにはポインタが格納されます。 新たなヒープページの割り当て、ヒープページ外への格納、これはどちらもメモリアロケータが使われます。
 メモリアロケータには glibc の malloc() と free() が使われます。 mallocは引数にメモリのサイズを自由に指定できる一方、配置される場所については何も保証されません。 メモリアロケータは余裕を持った大きさのメモリをカーネルから割り当てます。
 カーネルはページ単位でメモリを割り当てます。ページサイズはx86_64アーキテクチャにおいては4KBです。 仮想記憶の仕組みを用いてメモリの物理アドレスは仮想アドレスに抽象化されます。カーネルというよりOS特有の仮想メモリマネージャと言い換えてもいいですね。
 オブジェクトを生成すると Ruby ヒープページ → メモリアロケータ → カーネル → 物理メモリ と複数のレイヤーを通り、各レイヤーは必要な量よりも多めに割り当てます。 そしてRuby ヒープページには空スロットが存在し得えて、メモリアロケータが確保したヒープにも空きが存在し得ます。top コマンドでプロセスのメモリ使用量を見ると、カーネル観点でのメモリ使用量が表示されるだけなので、Ruby ヒープページでどのくらい使われているのか、メモリアロケータでどのくらい使われているかはわかりません。
-フラグメンテーション フラグメンテーションは、使用中のメモリ領域が未使用領域を挟んで飛び飛びに配置される状態を指します。フラグメンテーションは Ruby ヒープページとメモリアロケータそれぞれで起こり得ます。">
-<meta name=author content>
-<link rel=canonical href=https://nito95.github.io/posts/2021-08-09/>
-<meta name=google-site-verification content="G-FT3WYS86E7">
-<link rel=stylesheet href=https://nito95.github.io/css/custom.css>
-<link crossorigin=anonymous href=/assets/css/stylesheet.min.35cd0f65a15cafa92372b8313deef5960aae04b90ad722f2bbf509eb0468137e.css integrity="sha256-Nc0PZaFcr6kjcrgxPe71lgquBLkK1yLyu/UJ6wRoE34=" rel="preload stylesheet" as=style>
-<script defer crossorigin=anonymous src=/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5+kdJvBz5iKbt6B5PJI=" onload=hljs.initHighlightingOnLoad()></script>
-<link rel=icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<link rel=icon type=image/png sizes=16x16 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<link rel=icon type=image/png sizes=32x32 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<link rel=apple-touch-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<link rel=mask-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E>
-<meta name=theme-color content="#2e2e33">
-<meta name=msapplication-TileColor content="#2e2e33">
-<meta name=generator content="Hugo 0.88.1">
-<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.css integrity=sha384-Um5gpz1odJg5Z4HAmzPtgZKdTBHZdw8S29IecapCSB31ligYPhHQZMIlWLYQGVoc crossorigin=anonymous>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.js integrity=sha384-YNHdsYkH6gMx9y3mRkmcJ2mFUjTd0qNQQvY9VYZgQd7DcN7env35GzlmFaZ23JGp crossorigin=anonymous></script>
-<script defer src=https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/contrib/auto-render.min.js integrity=sha384-vZTG03m+2yp6N6BNi5iM4rW4oIwk5DfcNdFfxkk9ZWpDriOkXX8voJBFrAO7MpVl crossorigin=anonymous onload=renderMathInElement(document.body)></script>
-<meta property="og:title" content="Rubyのメモリ割り当て">
-<meta property="og:description" content="とあるSaaS製品を開発保守している知り合いが、Puma (Rails) のメモリが高止まりしてしまう現象が起きていたが、記事 Ruby: mallocでマルチスレッドプログラムのメモリが倍増する理由（翻訳） を参考に環境変数 MALLOC_ARENA_MAX をいじったら解決したと話していました。
+フラグメンテーション フラグメンテーションは、使用中のメモリ領域が未使用領域を挟んで飛び飛びに配置される状態を指します。フラグメンテーションは Ruby ヒープページとメモリアロケータそれぞれで起こり得ます。
+RubyではGCがヒープページの空きスロットを解放し、再利用可能な状態にしてくれます。 ヒープページ内のスロットが全て空き状態になれば、ページをメモリアロケータに解放することができます。 しかしGCによって空きスロットが飛び飛びになってしまうケースは往々にして起こり得ます。"><meta name=author content><link rel=canonical href=https://nito95.github.io/posts/2021-08-09/><meta name=google-site-verification content="G-FT3WYS86E7"><link rel=stylesheet href=https://nito95.github.io/css/custom.css><link crossorigin=anonymous href=/assets/css/stylesheet.min.35cd0f65a15cafa92372b8313deef5960aae04b90ad722f2bbf509eb0468137e.css integrity="sha256-Nc0PZaFcr6kjcrgxPe71lgquBLkK1yLyu/UJ6wRoE34=" rel="preload stylesheet" as=style><script defer crossorigin=anonymous src=/assets/js/highlight.min.e85ad0406048e8176e1c7661b25d5c69297ddfe41dc4124cf75ecb99a4f7b3d1.js integrity="sha256-6FrQQGBI6BduHHZhsl1caSl93+QdxBJM917LmaT3s9E=" onload=hljs.initHighlightingOnLoad()></script>
+<link rel=icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=icon type=image/png sizes=16x16 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=icon type=image/png sizes=32x32 href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=apple-touch-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><link rel=mask-icon href=https://nito95.github.io/%3Clink%20/%20abs%20url%3E><meta name=theme-color content="#2e2e33"><meta name=msapplication-TileColor content="#2e2e33"><meta name=generator content="Hugo 0.101.0"><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.css integrity=sha384-Um5gpz1odJg5Z4HAmzPtgZKdTBHZdw8S29IecapCSB31ligYPhHQZMIlWLYQGVoc crossorigin=anonymous><script defer src=https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.js integrity=sha384-YNHdsYkH6gMx9y3mRkmcJ2mFUjTd0qNQQvY9VYZgQd7DcN7env35GzlmFaZ23JGp crossorigin=anonymous></script>
+<script defer src=https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/contrib/auto-render.min.js integrity=sha384-vZTG03m+2yp6N6BNi5iM4rW4oIwk5DfcNdFfxkk9ZWpDriOkXX8voJBFrAO7MpVl crossorigin=anonymous onload=renderMathInElement(document.body)></script><meta property="og:title" content="Rubyのメモリ割り当て"><meta property="og:description" content="とあるSaaS製品を開発保守している知り合いが、Puma (Rails) のメモリが高止まりしてしまう現象が起きていたが、記事 Ruby: mallocでマルチスレッドプログラムのメモリが倍増する理由（翻訳） を参考に環境変数 MALLOC_ARENA_MAX をいじったら解決したと話していました。
 自分も現在 Puma (Rails) で動いているSNSアプリのバックエンドを担当しています。 1日あたり180 ~ 250万のAPIリクエストが行われており、1つのインスタンスあたり 2 worker * 8~32 threads = 16~64 threads でリクエストを処理しています。 今は特にメモリで困ってはいないですが、いつか同じ現象に悩まされるかもと思い、記事を読みつつ周辺知識を調べて深掘ってみました。
 メモリ割り当てで使われる3つのレイヤー Ruby でのメモリ割り当てには3つのレイヤーが関与します。
- Ruby VM メモリアロケータ カーネル  Ruby VMではRubyのオブジェクトを管理がされています。
-  Rubyのオブジェクトは40byte固定で、オブジェクトが生成されるとヒープページ内のスロットに格納されます。 もし空きスロットがない場合は新たなヒープページを割り当てます。 また40byte以上のオブジェクトの場合はヒープページの外に格納し、スロットにはポインタが格納されます。 新たなヒープページの割り当て、ヒープページ外への格納、これはどちらもメモリアロケータが使われます。
+Ruby VM メモリアロケータ カーネル Ruby VMではRubyのオブジェクトを管理がされています。
+Rubyのオブジェクトは40byte固定で、オブジェクトが生成されるとヒープページ内のスロットに格納されます。 もし空きスロットがない場合は新たなヒープページを割り当てます。 また40byte以上のオブジェクトの場合はヒープページの外に格納し、スロットにはポインタが格納されます。 新たなヒープページの割り当て、ヒープページ外への格納、これはどちらもメモリアロケータが使われます。
 メモリアロケータには glibc の malloc() と free() が使われます。 mallocは引数にメモリのサイズを自由に指定できる一方、配置される場所については何も保証されません。 メモリアロケータは余裕を持った大きさのメモリをカーネルから割り当てます。
 カーネルはページ単位でメモリを割り当てます。ページサイズはx86_64アーキテクチャにおいては4KBです。 仮想記憶の仕組みを用いてメモリの物理アドレスは仮想アドレスに抽象化されます。カーネルというよりOS特有の仮想メモリマネージャと言い換えてもいいですね。
 オブジェクトを生成すると Ruby ヒープページ → メモリアロケータ → カーネル → 物理メモリ と複数のレイヤーを通り、各レイヤーは必要な量よりも多めに割り当てます。 そしてRuby ヒープページには空スロットが存在し得えて、メモリアロケータが確保したヒープにも空きが存在し得ます。top コマンドでプロセスのメモリ使用量を見ると、カーネル観点でのメモリ使用量が表示されるだけなので、Ruby ヒープページでどのくらい使われているのか、メモリアロケータでどのくらい使われているかはわかりません。
-フラグメンテーション フラグメンテーションは、使用中のメモリ領域が未使用領域を挟んで飛び飛びに配置される状態を指します。フラグメンテーションは Ruby ヒープページとメモリアロケータそれぞれで起こり得ます。">
-<meta property="og:type" content="article">
-<meta property="og:url" content="https://nito95.github.io/posts/2021-08-09/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2021-08-09T00:00:00+00:00">
-<meta property="article:modified_time" content="2021-08-09T00:00:00+00:00"><meta property="og:site_name" content="nito95">
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Rubyのメモリ割り当て">
-<meta name=twitter:description content="とあるSaaS製品を開発保守している知り合いが、Puma (Rails) のメモリが高止まりしてしまう現象が起きていたが、記事 Ruby: mallocでマルチスレッドプログラムのメモリが倍増する理由（翻訳） を参考に環境変数 MALLOC_ARENA_MAX をいじったら解決したと話していました。
+フラグメンテーション フラグメンテーションは、使用中のメモリ領域が未使用領域を挟んで飛び飛びに配置される状態を指します。フラグメンテーションは Ruby ヒープページとメモリアロケータそれぞれで起こり得ます。
+RubyではGCがヒープページの空きスロットを解放し、再利用可能な状態にしてくれます。 ヒープページ内のスロットが全て空き状態になれば、ページをメモリアロケータに解放することができます。 しかしGCによって空きスロットが飛び飛びになってしまうケースは往々にして起こり得ます。"><meta property="og:type" content="article"><meta property="og:url" content="https://nito95.github.io/posts/2021-08-09/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2021-08-09T00:00:00+00:00"><meta property="article:modified_time" content="2021-08-09T00:00:00+00:00"><meta property="og:site_name" content="nito95"><meta name=twitter:card content="summary"><meta name=twitter:title content="Rubyのメモリ割り当て"><meta name=twitter:description content="とあるSaaS製品を開発保守している知り合いが、Puma (Rails) のメモリが高止まりしてしまう現象が起きていたが、記事 Ruby: mallocでマルチスレッドプログラムのメモリが倍増する理由（翻訳） を参考に環境変数 MALLOC_ARENA_MAX をいじったら解決したと話していました。
 自分も現在 Puma (Rails) で動いているSNSアプリのバックエンドを担当しています。 1日あたり180 ~ 250万のAPIリクエストが行われており、1つのインスタンスあたり 2 worker * 8~32 threads = 16~64 threads でリクエストを処理しています。 今は特にメモリで困ってはいないですが、いつか同じ現象に悩まされるかもと思い、記事を読みつつ周辺知識を調べて深掘ってみました。
 メモリ割り当てで使われる3つのレイヤー Ruby でのメモリ割り当てには3つのレイヤーが関与します。
- Ruby VM メモリアロケータ カーネル  Ruby VMではRubyのオブジェクトを管理がされています。
-  Rubyのオブジェクトは40byte固定で、オブジェクトが生成されるとヒープページ内のスロットに格納されます。 もし空きスロットがない場合は新たなヒープページを割り当てます。 また40byte以上のオブジェクトの場合はヒープページの外に格納し、スロットにはポインタが格納されます。 新たなヒープページの割り当て、ヒープページ外への格納、これはどちらもメモリアロケータが使われます。
+Ruby VM メモリアロケータ カーネル Ruby VMではRubyのオブジェクトを管理がされています。
+Rubyのオブジェクトは40byte固定で、オブジェクトが生成されるとヒープページ内のスロットに格納されます。 もし空きスロットがない場合は新たなヒープページを割り当てます。 また40byte以上のオブジェクトの場合はヒープページの外に格納し、スロットにはポインタが格納されます。 新たなヒープページの割り当て、ヒープページ外への格納、これはどちらもメモリアロケータが使われます。
 メモリアロケータには glibc の malloc() と free() が使われます。 mallocは引数にメモリのサイズを自由に指定できる一方、配置される場所については何も保証されません。 メモリアロケータは余裕を持った大きさのメモリをカーネルから割り当てます。
 カーネルはページ単位でメモリを割り当てます。ページサイズはx86_64アーキテクチャにおいては4KBです。 仮想記憶の仕組みを用いてメモリの物理アドレスは仮想アドレスに抽象化されます。カーネルというよりOS特有の仮想メモリマネージャと言い換えてもいいですね。
 オブジェクトを生成すると Ruby ヒープページ → メモリアロケータ → カーネル → 物理メモリ と複数のレイヤーを通り、各レイヤーは必要な量よりも多めに割り当てます。 そしてRuby ヒープページには空スロットが存在し得えて、メモリアロケータが確保したヒープにも空きが存在し得ます。top コマンドでプロセスのメモリ使用量を見ると、カーネル観点でのメモリ使用量が表示されるだけなので、Ruby ヒープページでどのくらい使われているのか、メモリアロケータでどのくらい使われているかはわかりません。
-フラグメンテーション フラグメンテーションは、使用中のメモリ領域が未使用領域を挟んで飛び飛びに配置される状態を指します。フラグメンテーションは Ruby ヒープページとメモリアロケータそれぞれで起こり得ます。">
-<script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://nito95.github.io/posts/"},{"@type":"ListItem","position":2,"name":"Rubyのメモリ割り当て","item":"https://nito95.github.io/posts/2021-08-09/"}]}</script>
-<script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"Rubyのメモリ割り当て","name":"Rubyのメモリ割り当て","description":"とあるSaaS製品を開発保守している知り合いが、Puma (Rails) のメモリが高止まりしてしまう現象が起きていたが、記事 Ruby: mallocでマルチスレッドプログラムのメモリが倍増する理由（翻訳） を参考に環境変数 MALLOC_ARENA_MAX をいじったら解決したと話していました。\n自分も現在 Puma (Rails) で動いているSNSアプリのバックエンドを担当しています。 1日あたり180 ~ 250万のAPIリクエストが行われており、1つのインスタンスあたり 2 worker * 8~32 threads = 16~64 threads でリクエストを処理しています。 今は特にメモリで困ってはいないですが、いつか同じ現象に悩まされるかもと思い、記事を読みつつ周辺知識を調べて深掘ってみました。\nメモリ割り当てで使われる3つのレイヤー Ruby でのメモリ割り当てには3つのレイヤーが関与します。\n Ruby VM メモリアロケータ カーネル  Ruby VMではRubyのオブジェクトを管理がされています。\n  Rubyのオブジェクトは40byte固定で、オブジェクトが生成されるとヒープページ内のスロットに格納されます。 もし空きスロットがない場合は新たなヒープページを割り当てます。 また40byte以上のオブジェクトの場合はヒープページの外に格納し、スロットにはポインタが格納されます。 新たなヒープページの割り当て、ヒープページ外への格納、これはどちらもメモリアロケータが使われます。\nメモリアロケータには glibc の malloc() と free() が使われます。 mallocは引数にメモリのサイズを自由に指定できる一方、配置される場所については何も保証されません。 メモリアロケータは余裕を持った大きさのメモリをカーネルから割り当てます。\nカーネルはページ単位でメモリを割り当てます。ページサイズはx86_64アーキテクチャにおいては4KBです。 仮想記憶の仕組みを用いてメモリの物理アドレスは仮想アドレスに抽象化されます。カーネルというよりOS特有の仮想メモリマネージャと言い換えてもいいですね。\nオブジェクトを生成すると Ruby ヒープページ → メモリアロケータ → カーネル → 物理メモリ と複数のレイヤーを通り、各レイヤーは必要な量よりも多めに割り当てます。 そしてRuby ヒープページには空スロットが存在し得えて、メモリアロケータが確保したヒープにも空きが存在し得ます。top コマンドでプロセスのメモリ使用量を見ると、カーネル観点でのメモリ使用量が表示されるだけなので、Ruby ヒープページでどのくらい使われているのか、メモリアロケータでどのくらい使われているかはわかりません。\nフラグメンテーション フラグメンテーションは、使用中のメモリ領域が未使用領域を挟んで飛び飛びに配置される状態を指します。フラグメンテーションは Ruby ヒープページとメモリアロケータそれぞれで起こり得ます。","keywords":["Ruby","Linux"],"articleBody":"とあるSaaS製品を開発保守している知り合いが、Puma (Rails) のメモリが高止まりしてしまう現象が起きていたが、記事 Ruby: mallocでマルチスレッドプログラムのメモリが倍増する理由（翻訳） を参考に環境変数 MALLOC_ARENA_MAX をいじったら解決したと話していました。\n自分も現在 Puma (Rails) で動いているSNSアプリのバックエンドを担当しています。 1日あたり180 ~ 250万のAPIリクエストが行われており、1つのインスタンスあたり 2 worker * 8~32 threads = 16~64 threads でリクエストを処理しています。 今は特にメモリで困ってはいないですが、いつか同じ現象に悩まされるかもと思い、記事を読みつつ周辺知識を調べて深掘ってみました。\nメモリ割り当てで使われる3つのレイヤー Ruby でのメモリ割り当てには3つのレイヤーが関与します。\n Ruby VM メモリアロケータ カーネル  Ruby VMではRubyのオブジェクトを管理がされています。\n  Rubyのオブジェクトは40byte固定で、オブジェクトが生成されるとヒープページ内のスロットに格納されます。 もし空きスロットがない場合は新たなヒープページを割り当てます。 また40byte以上のオブジェクトの場合はヒープページの外に格納し、スロットにはポインタが格納されます。 新たなヒープページの割り当て、ヒープページ外への格納、これはどちらもメモリアロケータが使われます。\nメモリアロケータには glibc の malloc() と free() が使われます。 mallocは引数にメモリのサイズを自由に指定できる一方、配置される場所については何も保証されません。 メモリアロケータは余裕を持った大きさのメモリをカーネルから割り当てます。\nカーネルはページ単位でメモリを割り当てます。ページサイズはx86_64アーキテクチャにおいては4KBです。 仮想記憶の仕組みを用いてメモリの物理アドレスは仮想アドレスに抽象化されます。カーネルというよりOS特有の仮想メモリマネージャと言い換えてもいいですね。\nオブジェクトを生成すると Ruby ヒープページ → メモリアロケータ → カーネル → 物理メモリ と複数のレイヤーを通り、各レイヤーは必要な量よりも多めに割り当てます。 そしてRuby ヒープページには空スロットが存在し得えて、メモリアロケータが確保したヒープにも空きが存在し得ます。top コマンドでプロセスのメモリ使用量を見ると、カーネル観点でのメモリ使用量が表示されるだけなので、Ruby ヒープページでどのくらい使われているのか、メモリアロケータでどのくらい使われているかはわかりません。\nフラグメンテーション フラグメンテーションは、使用中のメモリ領域が未使用領域を挟んで飛び飛びに配置される状態を指します。フラグメンテーションは Ruby ヒープページとメモリアロケータそれぞれで起こり得ます。\nRubyではGCがヒープページの空きスロットを解放し、再利用可能な状態にしてくれます。 ヒープページ内のスロットが全て空き状態になれば、ページをメモリアロケータに解放することができます。 しかしGCによって空きスロットが飛び飛びになってしまうケースは往々にして起こり得ます。\n  一方メモリアロケータでも同様の事象が起き得ます。下の図は3KB, 2KB, 7KBを割り当てている状態から3KBの割り当てを解放しています。\n  カーネルのページ単位は4KBなので、これではページの解放ができません。 また下の図のように、空きが連続していない場合には大きく確保ができないため、新たにメモリを割り当てる必要があります。\n  このようにRuby ヒープページとメモリアロケータ、どちらもフラグメンテーションが起こります。 記事によると、Ruby自体のメモリ使用量は全体のメモリ使用量に与える影響は小さく、Rubyのヒープページのフラグメンテーションはあまり関係ないとの調査結果が載っています。 典型的なRailsアプリのメモリ使用量の50%〜80%は、たかが数バイトより大きなオブジェクトに空きメモリを割り当てるmalloc呼び出しによって占められてるとのことでした。\nWell this sucks. Looks like only 15% of the heap in a basic Rails app is managed by the GC. 85% is just mallocs pic.twitter.com/sPbtAq4g8j\n— Aaron Patterson (@tenderlove) June 28, 2017  mallocとarena ではメモリアロケータで使われるmallocでは何が行われているのか。まずはプロセスのセグメント配置について書きます。\n  プロセスに割り当てられるメモリは1つの巨大な配列みたいなもので、64bit OSなら2^64byteのサイズを持ちます。 これは仮想メモリなので実際の物理メモリに2^64byte確保するのではなく、使った分だけ占有するようになってます。 ここにはプログラムを置く text領域 、初期化されたグローバル変数を置く data領域 、初期化されていない（データ領域だけ確保された）グローバル変数を置く bss領域 、関数の引数やローカル変数を置く stack領域 、プログラムのデータを置く heap領域 があります。\nstackは関数呼び出しの際に使われ、リターンアドレス、引数、内部のローカル変数、戻り値を保持するために使われます。関数が終了すると自動的にクリアされるのでメモリ管理は気にしなくて良いですね。 heapはstackに置けないデータ、例えば関数をまたいで保持したいデータを格納するために使われます。ここにmallocで確保したメモリが来ます。heapで不要になったメモリは、自動でメモリ管理がされないので明示的にfreeを行うか、GCに解放してもらいます。\ntext、data、bssは実行する前からサイズが分かっている一方、heapとstackはプログラムの実行中にサイズが変わるものなのでどこにどう置けばいいのかわからないです。 そこで図のようにstackとheapを両端に配置し、使いたい分だけ領域を伸ばせるようになっています。\nmallocでは最初に特定のサイズのheapを空きプールとして確保しますが、これには sbrk() が使われます。空きが足りなくなると随時sbrkを発行して補充をします。 そしてmallocはプロセスから要求されたサイズに応じてはchunkという単位で確保したプールからメモリを切り出します。 mallocによって確保されたメモリはfreeによって解放しますが、その時点でheap領域が減少するわけではありません。 未使用となったchunkは未使用リストにリンクされ管理されます。そして次の要求のあった時に必要に応じて再利用がされ、一定の条件を満たすとheap領域が減少されます。\nこれらメモリプールとメモリプールを管理するものを1つのまとまりとしてアリーナ(arena)と呼びます。 メモリプールの管理に使われるのは malloc_state という構造体で、デフォルトで使用されるarenaの管理部はmain_arenaという変数名で静的に定義されています。 プログラムが起動された時点ではarenaはこのmain_arena1つだけが存在します。\nこのmalloc_stateの頭にはmutex用の領域があります。あるスレッドがmallocの管理するchunkのリストを繋ぎ変えている途中で別のスレッドがそのリストを別スレッドが同時に使ったら問題が起きます。 これを防ぐためにアリーナを使う前にアリーナをロックし、使い終わったら解放するという排他処理をしています。 main_arenaを触りにいったら他スレッドが使用中だった、しかしパフォーマンスのためにロック終了を待たずしてarenaを使いたい、このときにmallocは mmap() で新たなarenaを確保します。 このarenaの最大数はデフォルトでは仮想CPU数の8倍あるようで、2つのハイパースレッドを持つ2コアでは 2 * 2 * 8 = 32 ものarenaができます。これがフラグメンテーションの原因です。\narenaの個数を減らすとフラグメンテーションを軽減できる一方で、arenaのロックの競合が増加して実行速度が落ちる可能性があります。 このトレードオフの落とし所はどこか、これが MALLOC_ARENA_MAX=2 、つまりarenaの最大数が2のときメモリ使用が大幅に省エネになり、パフォーマンス低下はわずかということでした。\n   Configuration Memory Use     Base (unlimited arenas) 1.73x   Base (before arenas introduced) 1x   MALLOC_ARENA_MAX=1 0.86   MALLOC_ARENA_MAX=2 0.87       Configuration Response Time     Base (unlimited arenas) 0.9x   Base (before arenas introduced) 1x   MALLOC_ARENA_MAX=1 1.15x   MALLOC_ARENA_MAX=2 1.03x    ちなみになぜデフォルトでは8なのか。 記事によると、メモリアロケータの開発元はRedHatであり、彼らの顧客は大量のRAMを搭載できる企業です。 大量のメモリを使用してマルチスレッドのパフォーマンスを少しでも上げることがRedHatの顧客にとって正しいトレードオフです。 メモリを潤沢に使いたくない、ミニマムな構成にしたい人にとってはこれは当てはまらないですね。\narenaの最大数を減らす以外にも、記事にはメモリアロケータを jemalloc に変える案も載っていました。 jemallocはmallocで発生するフラグメンテーションを回避する設計になっており、mallocよりずっと少ないメモリ使用でmallocと同等かそれ以上のパフォーマンスが出るようです。jemallocではメモリ割り当ての最小サイズがmallocよりも小さく、アプリケーションによっては10%-12%改善される という話がRubyKaigiの資料に載っていました。 jemallocをデフォルトのアロケータにしてくれないんですかね? :(\nおわりに メモリ使用が激しいとき、メモリリークを真っ先に疑ってしまいます。 エンジニアが書いたコードに問題があるケースの方が多いとは思いますが、このように低レイヤーを知っていることで原因調査のときに自分の引き出しを増やせて、スムーズに問題解決できるかもしれません。\nメモリ割り当てにmallocが使われてフラグメンテーションが起こるというのはRubyに限らず、他言語でも発生する現象だと思います。 Decreasing RAM Usage by 40% Using jemalloc with Python \u0026 Celery というPythonでのメモリの記事も見つけたので、今回のRubyによるメモリ割り当てを深掘った知識は汎用的と言えそうです。やったね :)\n参考  TechRacho - https://techracho.bpsinc.jp/hachi8833/2017_12_28/50109 glibc wiki - https://sourceware.org/glibc/wiki/MallocInternals Qiita - https://qiita.com/kaityo256/items/9e78b507940b2292bf79 技術文書 - https://www.valinux.co.jp/technologylibrary/document/linux/malloc0001/ 書籍「Linuxのしくみ」 - https://www.amazon.co.jp/dp/B079YJS1J1  ","wordCount":"237","inLanguage":"en","datePublished":"2021-08-09T00:00:00Z","dateModified":"2021-08-09T00:00:00Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://nito95.github.io/posts/2021-08-09/"},"publisher":{"@type":"Organization","name":"nito95 blog","logo":{"@type":"ImageObject","url":"https://nito95.github.io/%3Clink%20/%20abs%20url%3E"}}}</script>
-</head>
-<body id=top>
-<script>localStorage.getItem("pref-theme")==="dark"&&document.body.classList.add('dark')</script>
-<noscript>
-<style type=text/css>#theme-toggle,.top-link{display:none}</style>
-</noscript>
-<header class=header>
-<nav class=nav>
-<div class=logo>
-<a href=https://nito95.github.io/ accesskey=h title="nito95 blog (Alt + H)">nito95 blog</a>
-<span class=logo-switches>
-<button id=theme-toggle accesskey=t title="(Alt + T)"><svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-</button>
-</span>
-</div>
-<ul id=menu>
-<li>
-<a href=https://nito95.github.io/about/ title=About>
-<span>About</span>
-</a>
-</li>
-</ul>
-</nav>
-</header>
-<main class=main>
-<article class=post-single>
-<header class=post-header>
-<h1 class=post-title>
-Rubyのメモリ割り当て
-</h1>
-<div class=post-meta>August 9, 2021
-</div>
-</header>
-<div class=post-content><p>とあるSaaS製品を開発保守している知り合いが、<a href=https://github.com/puma/puma>Puma</a> (Rails) のメモリが高止まりしてしまう現象が起きていたが、記事 <a href=https://techracho.bpsinc.jp/hachi8833/2017_12_28/50109>Ruby: mallocでマルチスレッドプログラムのメモリが倍増する理由（翻訳）</a> を参考に環境変数 <code>MALLOC_ARENA_MAX</code> をいじったら解決したと話していました。</p>
-<p>自分も現在 Puma (Rails) で動いているSNSアプリのバックエンドを担当しています。
+フラグメンテーション フラグメンテーションは、使用中のメモリ領域が未使用領域を挟んで飛び飛びに配置される状態を指します。フラグメンテーションは Ruby ヒープページとメモリアロケータそれぞれで起こり得ます。
+RubyではGCがヒープページの空きスロットを解放し、再利用可能な状態にしてくれます。 ヒープページ内のスロットが全て空き状態になれば、ページをメモリアロケータに解放することができます。 しかしGCによって空きスロットが飛び飛びになってしまうケースは往々にして起こり得ます。"><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://nito95.github.io/posts/"},{"@type":"ListItem","position":2,"name":"Rubyのメモリ割り当て","item":"https://nito95.github.io/posts/2021-08-09/"}]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"Rubyのメモリ割り当て","name":"Rubyのメモリ割り当て","description":"とあるSaaS製品を開発保守している知り合いが、Puma (Rails) のメモリが高止まりしてしまう現象が起きていたが、記事 Ruby: mallocでマルチスレッドプログラムのメモリが倍増する理由（翻訳） を参考に環境変数 MALLOC_ARENA_MAX をいじったら解決したと話していました。\n自分も現在 Puma (Rails) で動いているSNSアプリのバックエンドを担当しています。 1日あたり180 ~ 250万のAPIリクエストが行われており、1つのインスタンスあたり 2 worker * 8~32 threads = 16~64 threads でリクエストを処理しています。 今は特にメモリで困ってはいないですが、いつか同じ現象に悩まされるかもと思い、記事を読みつつ周辺知識を調べて深掘ってみました。\nメモリ割り当てで使われる3つのレイヤー Ruby でのメモリ割り当てには3つのレイヤーが関与します。\nRuby VM メモリアロケータ カーネル Ruby VMではRubyのオブジェクトを管理がされています。\nRubyのオブジェクトは40byte固定で、オブジェクトが生成されるとヒープページ内のスロットに格納されます。 もし空きスロットがない場合は新たなヒープページを割り当てます。 また40byte以上のオブジェクトの場合はヒープページの外に格納し、スロットにはポインタが格納されます。 新たなヒープページの割り当て、ヒープページ外への格納、これはどちらもメモリアロケータが使われます。\nメモリアロケータには glibc の malloc() と free() が使われます。 mallocは引数にメモリのサイズを自由に指定できる一方、配置される場所については何も保証されません。 メモリアロケータは余裕を持った大きさのメモリをカーネルから割り当てます。\nカーネルはページ単位でメモリを割り当てます。ページサイズはx86_64アーキテクチャにおいては4KBです。 仮想記憶の仕組みを用いてメモリの物理アドレスは仮想アドレスに抽象化されます。カーネルというよりOS特有の仮想メモリマネージャと言い換えてもいいですね。\nオブジェクトを生成すると Ruby ヒープページ → メモリアロケータ → カーネル → 物理メモリ と複数のレイヤーを通り、各レイヤーは必要な量よりも多めに割り当てます。 そしてRuby ヒープページには空スロットが存在し得えて、メモリアロケータが確保したヒープにも空きが存在し得ます。top コマンドでプロセスのメモリ使用量を見ると、カーネル観点でのメモリ使用量が表示されるだけなので、Ruby ヒープページでどのくらい使われているのか、メモリアロケータでどのくらい使われているかはわかりません。\nフラグメンテーション フラグメンテーションは、使用中のメモリ領域が未使用領域を挟んで飛び飛びに配置される状態を指します。フラグメンテーションは Ruby ヒープページとメモリアロケータそれぞれで起こり得ます。\nRubyではGCがヒープページの空きスロットを解放し、再利用可能な状態にしてくれます。 ヒープページ内のスロットが全て空き状態になれば、ページをメモリアロケータに解放することができます。 しかしGCによって空きスロットが飛び飛びになってしまうケースは往々にして起こり得ます。","keywords":["Ruby","Linux"],"articleBody":"とあるSaaS製品を開発保守している知り合いが、Puma (Rails) のメモリが高止まりしてしまう現象が起きていたが、記事 Ruby: mallocでマルチスレッドプログラムのメモリが倍増する理由（翻訳） を参考に環境変数 MALLOC_ARENA_MAX をいじったら解決したと話していました。\n自分も現在 Puma (Rails) で動いているSNSアプリのバックエンドを担当しています。 1日あたり180 ~ 250万のAPIリクエストが行われており、1つのインスタンスあたり 2 worker * 8~32 threads = 16~64 threads でリクエストを処理しています。 今は特にメモリで困ってはいないですが、いつか同じ現象に悩まされるかもと思い、記事を読みつつ周辺知識を調べて深掘ってみました。\nメモリ割り当てで使われる3つのレイヤー Ruby でのメモリ割り当てには3つのレイヤーが関与します。\nRuby VM メモリアロケータ カーネル Ruby VMではRubyのオブジェクトを管理がされています。\nRubyのオブジェクトは40byte固定で、オブジェクトが生成されるとヒープページ内のスロットに格納されます。 もし空きスロットがない場合は新たなヒープページを割り当てます。 また40byte以上のオブジェクトの場合はヒープページの外に格納し、スロットにはポインタが格納されます。 新たなヒープページの割り当て、ヒープページ外への格納、これはどちらもメモリアロケータが使われます。\nメモリアロケータには glibc の malloc() と free() が使われます。 mallocは引数にメモリのサイズを自由に指定できる一方、配置される場所については何も保証されません。 メモリアロケータは余裕を持った大きさのメモリをカーネルから割り当てます。\nカーネルはページ単位でメモリを割り当てます。ページサイズはx86_64アーキテクチャにおいては4KBです。 仮想記憶の仕組みを用いてメモリの物理アドレスは仮想アドレスに抽象化されます。カーネルというよりOS特有の仮想メモリマネージャと言い換えてもいいですね。\nオブジェクトを生成すると Ruby ヒープページ → メモリアロケータ → カーネル → 物理メモリ と複数のレイヤーを通り、各レイヤーは必要な量よりも多めに割り当てます。 そしてRuby ヒープページには空スロットが存在し得えて、メモリアロケータが確保したヒープにも空きが存在し得ます。top コマンドでプロセスのメモリ使用量を見ると、カーネル観点でのメモリ使用量が表示されるだけなので、Ruby ヒープページでどのくらい使われているのか、メモリアロケータでどのくらい使われているかはわかりません。\nフラグメンテーション フラグメンテーションは、使用中のメモリ領域が未使用領域を挟んで飛び飛びに配置される状態を指します。フラグメンテーションは Ruby ヒープページとメモリアロケータそれぞれで起こり得ます。\nRubyではGCがヒープページの空きスロットを解放し、再利用可能な状態にしてくれます。 ヒープページ内のスロットが全て空き状態になれば、ページをメモリアロケータに解放することができます。 しかしGCによって空きスロットが飛び飛びになってしまうケースは往々にして起こり得ます。\n一方メモリアロケータでも同様の事象が起き得ます。下の図は3KB, 2KB, 7KBを割り当てている状態から3KBの割り当てを解放しています。\nカーネルのページ単位は4KBなので、これではページの解放ができません。 また下の図のように、空きが連続していない場合には大きく確保ができないため、新たにメモリを割り当てる必要があります。\nこのようにRuby ヒープページとメモリアロケータ、どちらもフラグメンテーションが起こります。 記事によると、Ruby自体のメモリ使用量は全体のメモリ使用量に与える影響は小さく、Rubyのヒープページのフラグメンテーションはあまり関係ないとの調査結果が載っています。 典型的なRailsアプリのメモリ使用量の50%〜80%は、たかが数バイトより大きなオブジェクトに空きメモリを割り当てるmalloc呼び出しによって占められてるとのことでした。\nWell this sucks. Looks like only 15% of the heap in a basic Rails app is managed by the GC. 85% is just mallocs pic.twitter.com/sPbtAq4g8j\n— Aaron Patterson (@tenderlove) June 28, 2017 mallocとarena ではメモリアロケータで使われるmallocでは何が行われているのか。まずはプロセスのセグメント配置について書きます。\nプロセスに割り当てられるメモリは1つの巨大な配列みたいなもので、64bit OSなら2^64byteのサイズを持ちます。 これは仮想メモリなので実際の物理メモリに2^64byte確保するのではなく、使った分だけ占有するようになってます。 ここにはプログラムを置く text領域 、初期化されたグローバル変数を置く data領域 、初期化されていない（データ領域だけ確保された）グローバル変数を置く bss領域 、関数の引数やローカル変数を置く stack領域 、プログラムのデータを置く heap領域 があります。\nstackは関数呼び出しの際に使われ、リターンアドレス、引数、内部のローカル変数、戻り値を保持するために使われます。関数が終了すると自動的にクリアされるのでメモリ管理は気にしなくて良いですね。 heapはstackに置けないデータ、例えば関数をまたいで保持したいデータを格納するために使われます。ここにmallocで確保したメモリが来ます。heapで不要になったメモリは、自動でメモリ管理がされないので明示的にfreeを行うか、GCに解放してもらいます。\ntext、data、bssは実行する前からサイズが分かっている一方、heapとstackはプログラムの実行中にサイズが変わるものなのでどこにどう置けばいいのかわからないです。 そこで図のようにstackとheapを両端に配置し、使いたい分だけ領域を伸ばせるようになっています。\nmallocでは最初に特定のサイズのheapを空きプールとして確保しますが、これには sbrk() が使われます。空きが足りなくなると随時sbrkを発行して補充をします。 そしてmallocはプロセスから要求されたサイズに応じてはchunkという単位で確保したプールからメモリを切り出します。 mallocによって確保されたメモリはfreeによって解放しますが、その時点でheap領域が減少するわけではありません。 未使用となったchunkは未使用リストにリンクされ管理されます。そして次の要求のあった時に必要に応じて再利用がされ、一定の条件を満たすとheap領域が減少されます。\nこれらメモリプールとメモリプールを管理するものを1つのまとまりとしてアリーナ(arena)と呼びます。 メモリプールの管理に使われるのは malloc_state という構造体で、デフォルトで使用されるarenaの管理部はmain_arenaという変数名で静的に定義されています。 プログラムが起動された時点ではarenaはこのmain_arena1つだけが存在します。\nこのmalloc_stateの頭にはmutex用の領域があります。あるスレッドがmallocの管理するchunkのリストを繋ぎ変えている途中で別のスレッドがそのリストを別スレッドが同時に使ったら問題が起きます。 これを防ぐためにアリーナを使う前にアリーナをロックし、使い終わったら解放するという排他処理をしています。 main_arenaを触りにいったら他スレッドが使用中だった、しかしパフォーマンスのためにロック終了を待たずしてarenaを使いたい、このときにmallocは mmap() で新たなarenaを確保します。 このarenaの最大数はデフォルトでは仮想CPU数の8倍あるようで、2つのハイパースレッドを持つ2コアでは 2 * 2 * 8 = 32 ものarenaができます。これがフラグメンテーションの原因です。\narenaの個数を減らすとフラグメンテーションを軽減できる一方で、arenaのロックの競合が増加して実行速度が落ちる可能性があります。 このトレードオフの落とし所はどこか、これが MALLOC_ARENA_MAX=2 、つまりarenaの最大数が2のときメモリ使用が大幅に省エネになり、パフォーマンス低下はわずかということでした。\nConfiguration Memory Use Base (unlimited arenas) 1.73x Base (before arenas introduced) 1x MALLOC_ARENA_MAX=1 0.86 MALLOC_ARENA_MAX=2 0.87 Configuration Response Time Base (unlimited arenas) 0.9x Base (before arenas introduced) 1x MALLOC_ARENA_MAX=1 1.15x MALLOC_ARENA_MAX=2 1.03x ちなみになぜデフォルトでは8なのか。 記事によると、メモリアロケータの開発元はRedHatであり、彼らの顧客は大量のRAMを搭載できる企業です。 大量のメモリを使用してマルチスレッドのパフォーマンスを少しでも上げることがRedHatの顧客にとって正しいトレードオフです。 メモリを潤沢に使いたくない、ミニマムな構成にしたい人にとってはこれは当てはまらないですね。\narenaの最大数を減らす以外にも、記事にはメモリアロケータを jemalloc に変える案も載っていました。 jemallocはmallocで発生するフラグメンテーションを回避する設計になっており、mallocよりずっと少ないメモリ使用でmallocと同等かそれ以上のパフォーマンスが出るようです。jemallocではメモリ割り当ての最小サイズがmallocよりも小さく、アプリケーションによっては10%-12%改善される という話がRubyKaigiの資料に載っていました。 jemallocをデフォルトのアロケータにしてくれないんですかね? :(\nおわりに メモリ使用が激しいとき、メモリリークを真っ先に疑ってしまいます。 エンジニアが書いたコードに問題があるケースの方が多いとは思いますが、このように低レイヤーを知っていることで原因調査のときに自分の引き出しを増やせて、スムーズに問題解決できるかもしれません。\nメモリ割り当てにmallocが使われてフラグメンテーションが起こるというのはRubyに限らず、他言語でも発生する現象だと思います。 Decreasing RAM Usage by 40% Using jemalloc with Python \u0026 Celery というPythonでのメモリの記事も見つけたので、今回のRubyによるメモリ割り当てを深掘った知識は汎用的と言えそうです。やったね :)\n参考 TechRacho - https://techracho.bpsinc.jp/hachi8833/2017_12_28/50109 glibc wiki - https://sourceware.org/glibc/wiki/MallocInternals Qiita - https://qiita.com/kaityo256/items/9e78b507940b2292bf79 技術文書 - https://www.valinux.co.jp/technologylibrary/document/linux/malloc0001/ 書籍「Linuxのしくみ」 - https://www.amazon.co.jp/dp/B079YJS1J1 ","wordCount":"237","inLanguage":"en","datePublished":"2021-08-09T00:00:00Z","dateModified":"2021-08-09T00:00:00Z","mainEntityOfPage":{"@type":"WebPage","@id":"https://nito95.github.io/posts/2021-08-09/"},"publisher":{"@type":"Organization","name":"nito95 blog","logo":{"@type":"ImageObject","url":"https://nito95.github.io/%3Clink%20/%20abs%20url%3E"}}}</script></head><body id=top><script>localStorage.getItem("pref-theme")==="dark"&&document.body.classList.add("dark")</script><noscript><style type=text/css>#theme-toggle,.top-link{display:none}</style></noscript><header class=header><nav class=nav><div class=logo><a href=https://nito95.github.io/ accesskey=h title="nito95 blog (Alt + H)">nito95 blog</a>
+<span class=logo-switches><button id=theme-toggle accesskey=t title="(Alt + T)"><svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></button></span></div><ul id=menu><li><a href=https://nito95.github.io/about/ title=About><span>About</span></a></li></ul></nav></header><main class=main><article class=post-single><header class=post-header><h1 class=post-title>Rubyのメモリ割り当て</h1><div class=post-meta>August 9, 2021</div></header><div class=post-content><p>とあるSaaS製品を開発保守している知り合いが、<a href=https://github.com/puma/puma>Puma</a> (Rails) のメモリが高止まりしてしまう現象が起きていたが、記事 <a href=https://techracho.bpsinc.jp/hachi8833/2017_12_28/50109>Ruby: mallocでマルチスレッドプログラムのメモリが倍増する理由（翻訳）</a> を参考に環境変数 <code>MALLOC_ARENA_MAX</code> をいじったら解決したと話していました。</p><p>自分も現在 Puma (Rails) で動いているSNSアプリのバックエンドを担当しています。
 1日あたり180 ~ 250万のAPIリクエストが行われており、1つのインスタンスあたり <code>2 worker * 8~32 threads = 16~64 threads</code> でリクエストを処理しています。
-今は特にメモリで困ってはいないですが、いつか同じ現象に悩まされるかもと思い、記事を読みつつ周辺知識を調べて深掘ってみました。</p>
-<h2 id=メモリ割り当てで使われる3つのレイヤー>メモリ割り当てで使われる3つのレイヤー<a hidden class=anchor aria-hidden=true href=#メモリ割り当てで使われる3つのレイヤー>#</a></h2>
-<p>Ruby でのメモリ割り当てには3つのレイヤーが関与します。</p>
-<ul>
-<li>Ruby VM</li>
-<li>メモリアロケータ</li>
-<li>カーネル</li>
-</ul>
-<p>Ruby VMではRubyのオブジェクトを管理がされています。</p>
-<figure>
-<img loading=lazy src=/images/2021-08-09-1.svg>
-</figure>
-<p>Rubyのオブジェクトは40byte固定で、オブジェクトが生成されるとヒープページ内のスロットに格納されます。
+今は特にメモリで困ってはいないですが、いつか同じ現象に悩まされるかもと思い、記事を読みつつ周辺知識を調べて深掘ってみました。</p><h2 id=メモリ割り当てで使われる3つのレイヤー>メモリ割り当てで使われる3つのレイヤー<a hidden class=anchor aria-hidden=true href=#メモリ割り当てで使われる3つのレイヤー>#</a></h2><p>Ruby でのメモリ割り当てには3つのレイヤーが関与します。</p><ul><li>Ruby VM</li><li>メモリアロケータ</li><li>カーネル</li></ul><p>Ruby VMではRubyのオブジェクトを管理がされています。</p><figure><img loading=lazy src=/images/2021-08-09-1.svg></figure><p>Rubyのオブジェクトは40byte固定で、オブジェクトが生成されるとヒープページ内のスロットに格納されます。
 もし空きスロットがない場合は新たなヒープページを割り当てます。
 また40byte以上のオブジェクトの場合はヒープページの外に格納し、スロットにはポインタが格納されます。
-新たなヒープページの割り当て、ヒープページ外への格納、これはどちらもメモリアロケータが使われます。</p>
-<p>メモリアロケータには glibc の <code>malloc()</code> と <code>free()</code> が使われます。
+新たなヒープページの割り当て、ヒープページ外への格納、これはどちらもメモリアロケータが使われます。</p><p>メモリアロケータには glibc の <code>malloc()</code> と <code>free()</code> が使われます。
 mallocは引数にメモリのサイズを自由に指定できる一方、配置される場所については何も保証されません。
-メモリアロケータは余裕を持った大きさのメモリをカーネルから割り当てます。</p>
-<p>カーネルはページ単位でメモリを割り当てます。ページサイズはx86_64アーキテクチャにおいては4KBです。
-仮想記憶の仕組みを用いてメモリの物理アドレスは仮想アドレスに抽象化されます。カーネルというよりOS特有の仮想メモリマネージャと言い換えてもいいですね。</p>
-<p>オブジェクトを生成すると Ruby ヒープページ → メモリアロケータ → カーネル → 物理メモリ と複数のレイヤーを通り、各レイヤーは必要な量よりも多めに割り当てます。
-そしてRuby ヒープページには空スロットが存在し得えて、メモリアロケータが確保したヒープにも空きが存在し得ます。<code>top</code> コマンドでプロセスのメモリ使用量を見ると、カーネル観点でのメモリ使用量が表示されるだけなので、Ruby ヒープページでどのくらい使われているのか、メモリアロケータでどのくらい使われているかはわかりません。</p>
-<h2 id=フラグメンテーション>フラグメンテーション<a hidden class=anchor aria-hidden=true href=#フラグメンテーション>#</a></h2>
-<p>フラグメンテーションは、使用中のメモリ領域が未使用領域を挟んで飛び飛びに配置される状態を指します。フラグメンテーションは Ruby ヒープページとメモリアロケータそれぞれで起こり得ます。</p>
-<p>RubyではGCがヒープページの空きスロットを解放し、再利用可能な状態にしてくれます。
+メモリアロケータは余裕を持った大きさのメモリをカーネルから割り当てます。</p><p>カーネルはページ単位でメモリを割り当てます。ページサイズはx86_64アーキテクチャにおいては4KBです。
+仮想記憶の仕組みを用いてメモリの物理アドレスは仮想アドレスに抽象化されます。カーネルというよりOS特有の仮想メモリマネージャと言い換えてもいいですね。</p><p>オブジェクトを生成すると Ruby ヒープページ → メモリアロケータ → カーネル → 物理メモリ と複数のレイヤーを通り、各レイヤーは必要な量よりも多めに割り当てます。
+そしてRuby ヒープページには空スロットが存在し得えて、メモリアロケータが確保したヒープにも空きが存在し得ます。<code>top</code> コマンドでプロセスのメモリ使用量を見ると、カーネル観点でのメモリ使用量が表示されるだけなので、Ruby ヒープページでどのくらい使われているのか、メモリアロケータでどのくらい使われているかはわかりません。</p><h2 id=フラグメンテーション>フラグメンテーション<a hidden class=anchor aria-hidden=true href=#フラグメンテーション>#</a></h2><p>フラグメンテーションは、使用中のメモリ領域が未使用領域を挟んで飛び飛びに配置される状態を指します。フラグメンテーションは Ruby ヒープページとメモリアロケータそれぞれで起こり得ます。</p><p>RubyではGCがヒープページの空きスロットを解放し、再利用可能な状態にしてくれます。
 ヒープページ内のスロットが全て空き状態になれば、ページをメモリアロケータに解放することができます。
-しかしGCによって空きスロットが飛び飛びになってしまうケースは往々にして起こり得ます。</p>
-<figure>
-<img loading=lazy src=/images/2021-08-09-2.svg>
-</figure>
-<p>一方メモリアロケータでも同様の事象が起き得ます。下の図は3KB, 2KB, 7KBを割り当てている状態から3KBの割り当てを解放しています。</p>
-<figure>
-<img loading=lazy src=/images/2021-08-09-3.svg>
-</figure>
-<p>カーネルのページ単位は4KBなので、これではページの解放ができません。
-また下の図のように、空きが連続していない場合には大きく確保ができないため、新たにメモリを割り当てる必要があります。</p>
-<figure>
-<img loading=lazy src=/images/2021-08-09-4.svg>
-</figure>
-<p>このようにRuby ヒープページとメモリアロケータ、どちらもフラグメンテーションが起こります。
+しかしGCによって空きスロットが飛び飛びになってしまうケースは往々にして起こり得ます。</p><figure><img loading=lazy src=/images/2021-08-09-2.svg></figure><p>一方メモリアロケータでも同様の事象が起き得ます。下の図は3KB, 2KB, 7KBを割り当てている状態から3KBの割り当てを解放しています。</p><figure><img loading=lazy src=/images/2021-08-09-3.svg></figure><p>カーネルのページ単位は4KBなので、これではページの解放ができません。
+また下の図のように、空きが連続していない場合には大きく確保ができないため、新たにメモリを割り当てる必要があります。</p><figure><img loading=lazy src=/images/2021-08-09-4.svg></figure><p>このようにRuby ヒープページとメモリアロケータ、どちらもフラグメンテーションが起こります。
 記事によると、Ruby自体のメモリ使用量は全体のメモリ使用量に与える影響は小さく、Rubyのヒープページのフラグメンテーションはあまり関係ないとの調査結果が載っています。
-典型的なRailsアプリのメモリ使用量の50%〜80%は、たかが数バイトより大きなオブジェクトに空きメモリを割り当てるmalloc呼び出しによって占められてるとのことでした。</p>
-<blockquote class=twitter-tweet><p lang=en dir=ltr>Well this sucks. Looks like only 15% of the heap in a basic Rails app is managed by the GC. 85% is just mallocs <a href=https://t.co/sPbtAq4g8j>pic.twitter.com/sPbtAq4g8j</a></p>&mdash; Aaron Patterson (@tenderlove) <a href="https://twitter.com/tenderlove/status/879870368680255489?ref_src=twsrc%5Etfw">June 28, 2017</a></blockquote>
-<script async src=https://platform.twitter.com/widgets.js></script>
-<h2 id=mallocとarena>mallocとarena<a hidden class=anchor aria-hidden=true href=#mallocとarena>#</a></h2>
-<p>ではメモリアロケータで使われるmallocでは何が行われているのか。まずはプロセスのセグメント配置について書きます。</p>
-<figure>
-<img loading=lazy src=/images/2021-08-09-5.svg>
-</figure>
-<p>プロセスに割り当てられるメモリは1つの巨大な配列みたいなもので、64bit OSなら2^64byteのサイズを持ちます。
+典型的なRailsアプリのメモリ使用量の50%〜80%は、たかが数バイトより大きなオブジェクトに空きメモリを割り当てるmalloc呼び出しによって占められてるとのことでした。</p><blockquote class=twitter-tweet><p lang=en dir=ltr>Well this sucks. Looks like only 15% of the heap in a basic Rails app is managed by the GC. 85% is just mallocs <a href=https://t.co/sPbtAq4g8j>pic.twitter.com/sPbtAq4g8j</a></p>&mdash; Aaron Patterson (@tenderlove) <a href="https://twitter.com/tenderlove/status/879870368680255489?ref_src=twsrc%5Etfw">June 28, 2017</a></blockquote><script async src=https://platform.twitter.com/widgets.js></script><h2 id=mallocとarena>mallocとarena<a hidden class=anchor aria-hidden=true href=#mallocとarena>#</a></h2><p>ではメモリアロケータで使われるmallocでは何が行われているのか。まずはプロセスのセグメント配置について書きます。</p><figure><img loading=lazy src=/images/2021-08-09-5.svg></figure><p>プロセスに割り当てられるメモリは1つの巨大な配列みたいなもので、64bit OSなら2^64byteのサイズを持ちます。
 これは仮想メモリなので実際の物理メモリに2^64byte確保するのではなく、使った分だけ占有するようになってます。
-ここにはプログラムを置く <em>text領域</em> 、初期化されたグローバル変数を置く <em>data領域</em> 、初期化されていない（データ領域だけ確保された）グローバル変数を置く <em>bss領域</em> 、関数の引数やローカル変数を置く <em>stack領域</em> 、プログラムのデータを置く <em>heap領域</em> があります。</p>
-<p>stackは関数呼び出しの際に使われ、リターンアドレス、引数、内部のローカル変数、戻り値を保持するために使われます。関数が終了すると自動的にクリアされるのでメモリ管理は気にしなくて良いですね。
-heapはstackに置けないデータ、例えば関数をまたいで保持したいデータを格納するために使われます。ここにmallocで確保したメモリが来ます。heapで不要になったメモリは、自動でメモリ管理がされないので明示的にfreeを行うか、GCに解放してもらいます。</p>
-<p>text、data、bssは実行する前からサイズが分かっている一方、heapとstackはプログラムの実行中にサイズが変わるものなのでどこにどう置けばいいのかわからないです。
-そこで図のようにstackとheapを両端に配置し、使いたい分だけ領域を伸ばせるようになっています。</p>
-<p>mallocでは最初に特定のサイズのheapを空きプールとして確保しますが、これには <code>sbrk()</code> が使われます。空きが足りなくなると随時sbrkを発行して補充をします。
+ここにはプログラムを置く <em>text領域</em> 、初期化されたグローバル変数を置く <em>data領域</em> 、初期化されていない（データ領域だけ確保された）グローバル変数を置く <em>bss領域</em> 、関数の引数やローカル変数を置く <em>stack領域</em> 、プログラムのデータを置く <em>heap領域</em> があります。</p><p>stackは関数呼び出しの際に使われ、リターンアドレス、引数、内部のローカル変数、戻り値を保持するために使われます。関数が終了すると自動的にクリアされるのでメモリ管理は気にしなくて良いですね。
+heapはstackに置けないデータ、例えば関数をまたいで保持したいデータを格納するために使われます。ここにmallocで確保したメモリが来ます。heapで不要になったメモリは、自動でメモリ管理がされないので明示的にfreeを行うか、GCに解放してもらいます。</p><p>text、data、bssは実行する前からサイズが分かっている一方、heapとstackはプログラムの実行中にサイズが変わるものなのでどこにどう置けばいいのかわからないです。
+そこで図のようにstackとheapを両端に配置し、使いたい分だけ領域を伸ばせるようになっています。</p><p>mallocでは最初に特定のサイズのheapを空きプールとして確保しますが、これには <code>sbrk()</code> が使われます。空きが足りなくなると随時sbrkを発行して補充をします。
 そしてmallocはプロセスから要求されたサイズに応じてはchunkという単位で確保したプールからメモリを切り出します。
 mallocによって確保されたメモリはfreeによって解放しますが、その時点でheap領域が減少するわけではありません。
-未使用となったchunkは未使用リストにリンクされ管理されます。そして次の要求のあった時に必要に応じて再利用がされ、一定の条件を満たすとheap領域が減少されます。</p>
-<p>これらメモリプールとメモリプールを管理するものを1つのまとまりとしてアリーナ(arena)と呼びます。
+未使用となったchunkは未使用リストにリンクされ管理されます。そして次の要求のあった時に必要に応じて再利用がされ、一定の条件を満たすとheap領域が減少されます。</p><p>これらメモリプールとメモリプールを管理するものを1つのまとまりとしてアリーナ(arena)と呼びます。
 メモリプールの管理に使われるのは <a href=https://code.woboq.org/userspace/glibc/malloc/malloc.c.html#malloc_state><code>malloc_state</code></a> という構造体で、デフォルトで使用されるarenaの管理部はmain_arenaという変数名で静的に定義されています。
-プログラムが起動された時点ではarenaはこのmain_arena1つだけが存在します。</p>
-<p>このmalloc_stateの頭にはmutex用の領域があります。あるスレッドがmallocの管理するchunkのリストを繋ぎ変えている途中で別のスレッドがそのリストを別スレッドが同時に使ったら問題が起きます。
+プログラムが起動された時点ではarenaはこのmain_arena1つだけが存在します。</p><p>このmalloc_stateの頭にはmutex用の領域があります。あるスレッドがmallocの管理するchunkのリストを繋ぎ変えている途中で別のスレッドがそのリストを別スレッドが同時に使ったら問題が起きます。
 これを防ぐためにアリーナを使う前にアリーナをロックし、使い終わったら解放するという排他処理をしています。
 main_arenaを触りにいったら他スレッドが使用中だった、しかしパフォーマンスのためにロック終了を待たずしてarenaを使いたい、このときにmallocは <code>mmap()</code> で新たなarenaを確保します。
-このarenaの最大数はデフォルトでは仮想CPU数の8倍あるようで、2つのハイパースレッドを持つ2コアでは <code>2 * 2 * 8 = 32</code> ものarenaができます。これがフラグメンテーションの原因です。</p>
-<p>arenaの個数を減らすとフラグメンテーションを軽減できる一方で、arenaのロックの競合が増加して実行速度が落ちる可能性があります。
-このトレードオフの落とし所はどこか、これが <code>MALLOC_ARENA_MAX=2</code> 、つまりarenaの最大数が2のときメモリ使用が大幅に省エネになり、パフォーマンス低下はわずかということでした。</p>
-<table>
-<thead>
-<tr>
-<th>Configuration</th>
-<th>Memory Use</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Base (unlimited arenas)</td>
-<td>1.73x</td>
-</tr>
-<tr>
-<td>Base (before arenas introduced)</td>
-<td>1x</td>
-</tr>
-<tr>
-<td>MALLOC_ARENA_MAX=1</td>
-<td>0.86</td>
-</tr>
-<tr>
-<td>MALLOC_ARENA_MAX=2</td>
-<td>0.87</td>
-</tr>
-</tbody>
-</table>
-<table>
-<thead>
-<tr>
-<th>Configuration</th>
-<th>Response Time</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Base (unlimited arenas)</td>
-<td>0.9x</td>
-</tr>
-<tr>
-<td>Base (before arenas introduced)</td>
-<td>1x</td>
-</tr>
-<tr>
-<td>MALLOC_ARENA_MAX=1</td>
-<td>1.15x</td>
-</tr>
-<tr>
-<td>MALLOC_ARENA_MAX=2</td>
-<td>1.03x</td>
-</tr>
-</tbody>
-</table>
-<p>ちなみになぜデフォルトでは8なのか。
+このarenaの最大数はデフォルトでは仮想CPU数の8倍あるようで、2つのハイパースレッドを持つ2コアでは <code>2 * 2 * 8 = 32</code> ものarenaができます。これがフラグメンテーションの原因です。</p><p>arenaの個数を減らすとフラグメンテーションを軽減できる一方で、arenaのロックの競合が増加して実行速度が落ちる可能性があります。
+このトレードオフの落とし所はどこか、これが <code>MALLOC_ARENA_MAX=2</code> 、つまりarenaの最大数が2のときメモリ使用が大幅に省エネになり、パフォーマンス低下はわずかということでした。</p><table><thead><tr><th>Configuration</th><th>Memory Use</th></tr></thead><tbody><tr><td>Base (unlimited arenas)</td><td>1.73x</td></tr><tr><td>Base (before arenas introduced)</td><td>1x</td></tr><tr><td>MALLOC_ARENA_MAX=1</td><td>0.86</td></tr><tr><td>MALLOC_ARENA_MAX=2</td><td>0.87</td></tr></tbody></table><table><thead><tr><th>Configuration</th><th>Response Time</th></tr></thead><tbody><tr><td>Base (unlimited arenas)</td><td>0.9x</td></tr><tr><td>Base (before arenas introduced)</td><td>1x</td></tr><tr><td>MALLOC_ARENA_MAX=1</td><td>1.15x</td></tr><tr><td>MALLOC_ARENA_MAX=2</td><td>1.03x</td></tr></tbody></table><p>ちなみになぜデフォルトでは8なのか。
 記事によると、メモリアロケータの開発元はRedHatであり、彼らの顧客は大量のRAMを搭載できる企業です。
 大量のメモリを使用してマルチスレッドのパフォーマンスを少しでも上げることがRedHatの顧客にとって正しいトレードオフです。
-メモリを潤沢に使いたくない、ミニマムな構成にしたい人にとってはこれは当てはまらないですね。</p>
-<p>arenaの最大数を減らす以外にも、記事にはメモリアロケータを <a href=https://github.com/jemalloc/jemalloc><code>jemalloc</code></a> に変える案も載っていました。
+メモリを潤沢に使いたくない、ミニマムな構成にしたい人にとってはこれは当てはまらないですね。</p><p>arenaの最大数を減らす以外にも、記事にはメモリアロケータを <a href=https://github.com/jemalloc/jemalloc><code>jemalloc</code></a> に変える案も載っていました。
 jemallocはmallocで発生するフラグメンテーションを回避する設計になっており、mallocよりずっと少ないメモリ使用でmallocと同等かそれ以上のパフォーマンスが出るようです。jemallocではメモリ割り当ての最小サイズがmallocよりも小さく、<a href="https://docs.google.com/presentation/d/1-WrYwz-QnSI9yeRZfCCgUno-KOMuggiGHlmOETXZy9c/edit#slide=id.p">アプリケーションによっては10%-12%改善される</a> という話がRubyKaigiの資料に載っていました。
-jemallocをデフォルトのアロケータにしてくれないんですかね? :(</p>
-<h2 id=おわりに>おわりに<a hidden class=anchor aria-hidden=true href=#おわりに>#</a></h2>
-<p>メモリ使用が激しいとき、メモリリークを真っ先に疑ってしまいます。
-エンジニアが書いたコードに問題があるケースの方が多いとは思いますが、このように低レイヤーを知っていることで原因調査のときに自分の引き出しを増やせて、スムーズに問題解決できるかもしれません。</p>
-<p>メモリ割り当てにmallocが使われてフラグメンテーションが起こるというのはRubyに限らず、他言語でも発生する現象だと思います。
-<a href=https://zapier.com/engineering/celery-python-jemalloc/>Decreasing RAM Usage by 40% Using jemalloc with Python & Celery</a> というPythonでのメモリの記事も見つけたので、今回のRubyによるメモリ割り当てを深掘った知識は汎用的と言えそうです。やったね :)</p>
-<h3 id=参考>参考<a hidden class=anchor aria-hidden=true href=#参考>#</a></h3>
-<ul>
-<li>TechRacho - <a href=https://techracho.bpsinc.jp/hachi8833/2017_12_28/50109>https://techracho.bpsinc.jp/hachi8833/2017_12_28/50109</a></li>
-<li>glibc wiki - <a href=https://sourceware.org/glibc/wiki/MallocInternals>https://sourceware.org/glibc/wiki/MallocInternals</a></li>
-<li>Qiita - <a href=https://qiita.com/kaityo256/items/9e78b507940b2292bf79>https://qiita.com/kaityo256/items/9e78b507940b2292bf79</a></li>
-<li>技術文書 - <a href=https://www.valinux.co.jp/technologylibrary/document/linux/malloc0001/>https://www.valinux.co.jp/technologylibrary/document/linux/malloc0001/</a></li>
-<li>書籍「Linuxのしくみ」 - <a href=https://www.amazon.co.jp/dp/B079YJS1J1>https://www.amazon.co.jp/dp/B079YJS1J1</a></li>
-</ul>
-</div>
-<footer class=post-footer>
-<ul class=post-tags>
-<li><a href=https://nito95.github.io/tags/ruby/>Ruby</a></li>
-<li><a href=https://nito95.github.io/tags/linux/>Linux</a></li>
-</ul>
-<nav class=paginav>
-<a class=next href=https://nito95.github.io/posts/2021-07-11/>
-<span class=title>Next Page »</span>
-<br>
-<span>Amazon Aurora</span>
-</a>
-</nav>
-</footer>
-</article>
-</main>
-<footer class=footer>
-<span>&copy; 2021 <a href=https://nito95.github.io/>nito95 blog</a></span>
-<span>
-Powered by
+jemallocをデフォルトのアロケータにしてくれないんですかね? :(</p><h2 id=おわりに>おわりに<a hidden class=anchor aria-hidden=true href=#おわりに>#</a></h2><p>メモリ使用が激しいとき、メモリリークを真っ先に疑ってしまいます。
+エンジニアが書いたコードに問題があるケースの方が多いとは思いますが、このように低レイヤーを知っていることで原因調査のときに自分の引き出しを増やせて、スムーズに問題解決できるかもしれません。</p><p>メモリ割り当てにmallocが使われてフラグメンテーションが起こるというのはRubyに限らず、他言語でも発生する現象だと思います。
+<a href=https://zapier.com/engineering/celery-python-jemalloc/>Decreasing RAM Usage by 40% Using jemalloc with Python & Celery</a> というPythonでのメモリの記事も見つけたので、今回のRubyによるメモリ割り当てを深掘った知識は汎用的と言えそうです。やったね :)</p><h3 id=参考>参考<a hidden class=anchor aria-hidden=true href=#参考>#</a></h3><ul><li>TechRacho - <a href=https://techracho.bpsinc.jp/hachi8833/2017_12_28/50109>https://techracho.bpsinc.jp/hachi8833/2017_12_28/50109</a></li><li>glibc wiki - <a href=https://sourceware.org/glibc/wiki/MallocInternals>https://sourceware.org/glibc/wiki/MallocInternals</a></li><li>Qiita - <a href=https://qiita.com/kaityo256/items/9e78b507940b2292bf79>https://qiita.com/kaityo256/items/9e78b507940b2292bf79</a></li><li>技術文書 - <a href=https://www.valinux.co.jp/technologylibrary/document/linux/malloc0001/>https://www.valinux.co.jp/technologylibrary/document/linux/malloc0001/</a></li><li>書籍「Linuxのしくみ」 - <a href=https://www.amazon.co.jp/dp/B079YJS1J1>https://www.amazon.co.jp/dp/B079YJS1J1</a></li></ul></div><footer class=post-footer><ul class=post-tags><li><a href=https://nito95.github.io/tags/ruby/>Ruby</a></li><li><a href=https://nito95.github.io/tags/linux/>Linux</a></li></ul><nav class=paginav><a class=next href=https://nito95.github.io/posts/2021-07-11/><span class=title>Next Page »</span><br><span>Amazon Aurora</span></a></nav></footer></article></main><footer class=footer><span>&copy; 2022 <a href=https://nito95.github.io/>nito95 blog</a></span>
+<span>Powered by
 <a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
-        <a href=https://git.io/hugopapermod rel=noopener target=_blank>PaperMod</a>
-</span>
-</footer>
-<a href=#top aria-label="go to top" title="Go to Top (Alt + G)">
-<button class=top-link id=top-link type=button accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg>
-</button>
-</a>
-<script>let menu=document.getElementById('menu');menu.scrollLeft=localStorage.getItem("menu-scroll-position"),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)},document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener("click",function(b){b.preventDefault();var a=this.getAttribute("href").substr(1);window.matchMedia('(prefers-reduced-motion: reduce)').matches?document.querySelector(`[id='${decodeURIComponent(a)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(a)}']`).scrollIntoView({behavior:"smooth"}),a==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${a}`)})})</script>
-<script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script>
-<script>document.getElementById("theme-toggle").addEventListener("click",()=>{document.body.className.includes("dark")?(document.body.classList.remove('dark'),localStorage.setItem("pref-theme",'light')):(document.body.classList.add('dark'),localStorage.setItem("pref-theme",'dark'))})</script>
-</body>
-</html>
+        <a href=https://git.io/hugopapermod rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top aria-label="go to top" title="Go to Top (Alt + G)"><button class=top-link id=top-link type=button accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg></button></a>
+<script>let menu=document.getElementById("menu");menu.scrollLeft=localStorage.getItem("menu-scroll-position"),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)},document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(e){e.preventDefault();var t=this.getAttribute("href").substr(1);window.matchMedia("(prefers-reduced-motion: reduce)").matches?document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView({behavior:"smooth"}),t==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${t}`)})})</script><script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script><script>document.getElementById("theme-toggle").addEventListener("click",()=>{document.body.className.includes("dark")?(document.body.classList.remove("dark"),localStorage.setItem("pref-theme","light")):(document.body.classList.add("dark"),localStorage.setItem("pref-theme","dark"))})</script></body></html>
